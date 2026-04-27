@@ -13,8 +13,7 @@ let isPaused = false;
 
 // --- Deck Tracking Variables ---
 let unseenWords = [];
-let skippedWords = [];
-let correctWords = [];
+let seenWords = []; // Replaces correctWords and skippedWords
 let currentCard = null;
 
 // --- DOM Elements ---
@@ -58,14 +57,14 @@ function showScreen(screenName) {
 }
 
 function getFilteredDeck(category) {
+    // wordDeck comes from words.js
     let filtered = category === "All" ? [...wordDeck] : wordDeck.filter(card => card.category === category);
     return filtered;
 }
 
 function resetDeck(category) {
     unseenWords = getFilteredDeck(category);
-    skippedWords = [];
-    correctWords = [];
+    seenWords = [];
     currentCard = null;
 }
 
@@ -93,6 +92,7 @@ function startTurn() {
     timeLimit = parseInt(ui.timeInputTurn.value) || 60;
     let selectedCategory = ui.catInputTurn.value;
     
+    // Refresh deck pools if the category was changed
     if (selectedCategory !== currentCategory) {
         currentCategory = selectedCategory;
         resetDeck(currentCategory);
@@ -121,23 +121,18 @@ function startTurn() {
 
 // --- Deck Distribution Logic ---
 function getNextDeckCard() {
-    if (unseenWords.length === 0 && skippedWords.length === 0) {
-        unseenWords = [...correctWords];
-        correctWords = [];
+    // If we run out of unseen words, recycle the seen words back into the deck
+    if (unseenWords.length === 0) {
+        unseenWords = [...seenWords];
+        seenWords = [];
+        
+        // Failsafe in case both are completely empty
         if (unseenWords.length === 0) unseenWords = getFilteredDeck(currentCategory);
     }
 
-    let poolToDrawFrom = unseenWords;
-    
-    // 25% chance to draw from skipped words if available
-    if (unseenWords.length > 0 && skippedWords.length > 0) {
-        if (Math.random() < 0.25) poolToDrawFrom = skippedWords;
-    } else if (unseenWords.length === 0) {
-        poolToDrawFrom = skippedWords;
-    }
-
-    const randomIndex = Math.floor(Math.random() * poolToDrawFrom.length);
-    return poolToDrawFrom.splice(randomIndex, 1)[0]; 
+    // Pull a random card from the unseen pool
+    const randomIndex = Math.floor(Math.random() * unseenWords.length);
+    return unseenWords.splice(randomIndex, 1)[0]; 
 }
 
 function loadNextCard() {
@@ -152,15 +147,14 @@ function renderCard(card) {
 
 function handleGuess(points) {
     if (isPaused) return; 
+    
+    // Update score
     currentRoundScore = Math.max(0, currentRoundScore + points);
     ui.currentRoundScore.innerText = currentRoundScore;
     
+    // Move the current card to the seen pile
     if (currentCard) {
-        if (points > 0) {
-            correctWords.push(currentCard);
-        } else {
-            skippedWords.push(currentCard);
-        }
+        seenWords.push(currentCard);
     }
     
     loadNextCard();
@@ -180,11 +174,13 @@ function togglePause() {
 function endTurn() {
     clearInterval(timerInterval);
     
+    // The word currently on screen hasn't been guessed. Treat as seen so it doesn't repeat immediately.
     if (currentCard) {
-        skippedWords.push(currentCard);
+        seenWords.push(currentCard);
         currentCard = null; 
     }
     
+    // Log scores
     totalScores[currentTeam] += currentRoundScore;
     const actualRound = Math.ceil(roundCounter / 2);
     
@@ -198,6 +194,7 @@ function endTurn() {
         }
     }
     
+    // Swap teams and update UI
     currentTeam = currentTeam === 1 ? 2 : 1;
     roundCounter++;
     
