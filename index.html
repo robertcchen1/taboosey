@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taboosey: Online Taboo Word Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="setup-screen" class="screen active">
+            <div class="title-area">
+                <i class="fas fa-cat main-cat-icon"></i>
+                <h1>Taboosey</h1>
+                <p class="subtitle">Online Taboo Word Game</p>
+            </div>
+            
+            <div class="settings-container">
+                <div class="input-group">
+                    <label class="stylish-label" for="time-limit">Time Limit:</label>
+                    <div class="input-wrap">
+                        <input type="number" id="time-limit" value="60" min="10" max="120">
+                        <span class="unit">sec</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="stylish-label" for="setup-category">Category:</label>
+                    <select id="setup-category" class="stylish-input">
+                        <option value="All">All Categories</option>
+                        <option value="Food">Food & Drink</option>
+                        <option value="Animals">Animals</option>
+                        <option value="Tech">Technology</option>
+                        <option value="Nature">Nature</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="start-game-btn" class="btn-success btn-large">Start Game</button>
+        </div>
+
+        <div id="turn-screen" class="screen">
+            <div class="turn-header">
+                <h2 id="team-announcement">Team 1's Turn</h2>
+            </div>
+            
+            <div class="stats-panel">
+                <div class="team-totals">
+                    <div class="team-stat">
+                        <h3 class="t1-label">Team 1</h3>
+                        <span id="t1-score-display" class="big-score t1-score">0</span>
+                    </div>
+                    <div class="team-stat">
+                        <h3 class="t2-label">Team 2</h3>
+                        <span id="t2-score-display" class="big-score t2-score">0</span>
+                    </div>
+                </div>
+                
+                <div class="history-section">
+                    <h3>Round History</h3>
+                    <div class="history-grid-header">
+                        <span class="hg-round">Round</span>
+                        <span class="hg-t1 t1-label">T1</span>
+                        <span class="hg-blank"></span>
+                        <span class="hg-t2 t2-label">T2</span>
+                    </div>
+                    <div class="history-container">
+                        <ul id="score-history-list">
+                            <li class="history-placeholder">No rounds played yet.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="turn-controls">
+                <div class="settings-row">
+                    <div class="setting-item">
+                        <label class="stylish-label" for="turn-time-limit">Time:</label>
+                        <input type="number" id="turn-time-limit" class="small-input" value="60" min="10" max="120">
+                    </div>
+                    <div class="setting-item">
+                        <label class="stylish-label" for="turn-category">Category:</label>
+                        <select id="turn-category" class="stylish-input small-select">
+                            <option value="All">All</option>
+                            <option value="Food">Food</option>
+                            <option value="Animals">Animals</option>
+                            <option value="Tech">Tech</option>
+                            <option value="Nature">Nature</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-row">
+                    <button id="reset-scores-btn" class="btn-danger">Reset</button>
+                    <button id="start-turn-btn" class="btn-success">Start Next Round</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div class="header">
+                <div class="timer-wrap">
+                    <span id="timer-display">60</span>s
+                </div>
+                <div class="score-wrap">
+                    Score: <span id="current-round-score">0</span>
+                </div>
+            </div>
+            
+            <div class="card taboo-card">
+                <h2 id="target-word">WORD</h2>
+                <hr>
+                <ul id="taboo-words">
+                    <li>Taboo 1</li>
+                    <li>Taboo 2</li>
+                </ul>
+            </div>
+
+            <div class="controls">
+                <button id="taboo-btn" class="btn-danger">Taboo (-1)</button>
+                <button id="skip-btn" class="btn-secondary">Skip (0)</button>
+                <button id="correct-btn" class="btn-success">Correct (+1)</button>
+            </div>
+            
+            <div class="utility-controls">
+                <button id="pause-btn" class="btn-warning">Pause</button>
+                <button id="end-round-btn" class="btn-danger">End Round</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="words.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

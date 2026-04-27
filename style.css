@@ -1,0 +1,106 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a1a;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+#app {
+    background: #ecf0f1;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    position: relative;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* Title Area */
+.title-area { margin-bottom: 25px; color: #111; }
+.title-area h1 { font-size: 2.8rem; margin: 0; color: #111; }
+.main-cat-icon { font-size: 3rem; color: #111; margin-bottom: 10px; }
+.subtitle { margin: 0; font-size: 1rem; color: #555; font-weight: bold; }
+
+/* Settings & Inputs */
+.settings-container { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ccc; }
+.input-group { margin: 15px 0; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.stylish-label { font-weight: 700; color: #111; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.input-wrap { display: flex; align-items: center; gap: 8px; }
+.unit { color: #7f8c8d; font-weight: bold; }
+
+input[type="number"], .stylish-input {
+    padding: 10px;
+    font-size: 1.1rem;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #111;
+    font-weight: bold;
+    outline: none;
+    transition: 0.3s;
+}
+input[type="number"]:focus, .stylish-input:focus { border-color: #f39c12; box-shadow: 0 0 8px rgba(243, 156, 18, 0.3); }
+.small-input { width: 50px !important; padding: 6px !important; }
+.small-select { width: 110px !important; padding: 6px !important; font-size: 0.95rem; }
+
+/* Stats Panel & Team Colors */
+.stats-panel { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #ccc; }
+.team-totals { display: flex; justify-content: space-around; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px; margin-bottom: 15px; }
+.team-stat h3 { margin: 0 0 10px 0; }
+.big-score { font-size: 3rem; font-weight: bold; }
+.t1-label { color: #3498db; } 
+.t2-label { color: #f39c12; } 
+.t1-score { color: #2980b9; }
+.t2-score { color: #e67e22; }
+
+/* History Section */
+.history-section h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 1.1rem; }
+.history-grid-header, .history-item { display: grid; grid-template-columns: 1fr 40px 20px 40px; align-items: center; }
+.history-grid-header { padding: 0 15px 5px 15px; font-size: 0.8rem; color: #7f8c8d; font-weight: bold; text-transform: uppercase; }
+.hg-round { text-align: left; }
+.hg-t1, .hg-t2, .hg-blank { text-align: center; }
+.history-container { max-height: 120px; overflow-y: auto; background: #f9f9f9; border-radius: 6px; padding: 8px; border: 1px solid #e0e0e0; }
+#score-history-list { list-style: none; padding: 0; margin: 0; }
+.history-item { background: #fff; padding: 8px 15px; border-radius: 6px; margin-bottom: 5px; border: 1px solid #ddd; }
+.hist-round { font-weight: bold; color: #555; font-size: 0.95rem; }
+.hist-score { font-size: 1.1rem; font-weight: bold; }
+.hist-vs { color: #ccc; font-size: 0.9rem; }
+.history-placeholder { color: #aaa; text-align: center; justify-content: center !important; display: flex; padding: 10px; }
+
+/* Turn Header & Controls */
+.turn-header { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.turn-header h2 { color: #111; font-size: 2rem; margin: 0; }
+.settings-row { background: white; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; border: 1px solid #ccc;}
+.setting-item { display: flex; align-items: center; gap: 8px; }
+.action-row { display: flex; justify-content: space-between; gap: 10px; }
+.action-row button { flex: 1; margin: 0; }
+
+/* Active Game Screen */
+.taboo-card { background: white; padding: 30px 20px; border-radius: 8px; border: 2px solid #111; margin: 20px 0; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-height: 180px; display: flex; flex-direction: column; justify-content: center; }
+#target-word { font-size: 2.2rem; color: #e67e22; margin: 0 0 10px 0; text-transform: uppercase; position: relative;}
+#taboo-words { list-style-type: none; padding: 0; color: #111; font-size: 1.3rem; font-weight: bold; }
+#taboo-words li { margin: 8px 0; }
+
+.header { display: flex; justify-content: space-between; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; align-items: center; color: #111;}
+.timer-wrap { color: #f39c12; }
+.score-wrap { font-size: 1.2rem; }
+.controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+.utility-controls { margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px; display: flex; justify-content: center; gap: 10px; }
+
+/* Buttons */
+button { padding: 12px 15px; font-size: 1rem; border: none; border-radius: 6px; cursor: pointer; color: white; background-color: #333; font-weight: bold; transition: 0.2s; }
+button:hover:not(:disabled) { filter: brightness(120%); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-large { width: 100%; font-size: 1.2rem; padding: 15px; }
+.btn-success { background-color: #27ae60; }
+.btn-warning { background-color: #f39c12; color: #fff; }
+.btn-danger { background-color: #c0392b; }
+.btn-secondary { background-color: #95a5a6; }
