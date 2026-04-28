@@ -413,7 +413,7 @@ const wordDeck = [
     { word: "Red Panda", category: "Animals", taboo: ["Bamboo", "Cute", "China", "Animal", "Raccoon"] },
     { word: "Tasmanian Devil", category: "Animals", taboo: ["Australia", "Spin", "Cartoon", "Animal", "Fierce"] },
     { word: "Meerkat Mob", category: "Animals", taboo: ["Africa", "Stand", "Desert", "Animal", "Timon"] },
-    { word: "Honey Badger", category: "Animals", taboo: ["Fierce", "Africa", "Animal", "Tough", "Stripe"] }
+    { word: "Honey Badger", category: "Animals", taboo: ["Fierce", "Africa", "Animal", "Tough", "Stripe"] },
 
     // --- TECHNOLOGY (160 Singles) ---
     { word: "Computer", category: "Tech", taboo: ["Screen", "Keyboard", "Mouse", "Internet", "Type"] },
@@ -816,7 +816,7 @@ const wordDeck = [
     { word: "Rain Forest", category: "Nature", taboo: ["Jungle", "Trees", "Wet", "Tropical", "Animals"] },
     { word: "Redwood Tree", category: "Nature", taboo: ["Tall", "California", "Giant", "Wood", "Forest"] },
     { word: "Oak Tree", category: "Nature", taboo: ["Acorn", "Wood", "Leaves", "Big", "Branches"] },
-    { word: "Maple Leaf", category: "Nature", taboo: ["Canada", "Tree", "Red", "Syrup", "Fall"] }
+    { word: "Maple Leaf", category: "Nature", taboo: ["Canada", "Tree", "Red", "Syrup", "Fall"] },
 
     // --- PLACES & LOCATIONS (160 Singles) ---
     { word: "Hospital", category: "Places", taboo: ["Sick", "Doctor", "Nurse", "Emergency", "Bed"] },
