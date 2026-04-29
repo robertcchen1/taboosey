@@ -16,6 +16,11 @@
                 <p class="subtitle">Online Taboo Word Game</p>
             </div>
             
+            <div class="brief-rules">
+                <p style="margin-top: 0; margin-bottom: 10px;">Describe the <strong>Target Word</strong> to your team without saying any of the <strong>Taboo words</strong>!</p>
+                <p style="margin: 0;">Score <span class="score-badge success">+1</span> for correct guesses, and <span class="score-badge danger">-1</span> if you accidentally say a Taboo word.</p>
+            </div>
+            
             <div class="settings-container">
                 <div class="input-group">
                     <label class="stylish-label" for="time-limit">Time Limit:</label>
@@ -35,11 +40,32 @@
                         <option value="Nature">Nature</option>
                         <option value="Places">Places & Locations</option>
                         <option value="Actions">Actions & Verbs</option>
+                        <option value="Custom">Custom (AI)</option>
                     </select>
+                </div>
+                
+                <div class="input-group" id="custom-cat-group-setup" style="display: none;">
+                    <label class="stylish-label" for="custom-cat-input-setup">Topic:</label>
+                    <input type="text" id="custom-cat-input-setup" class="stylish-input" placeholder="Type anything...">
+                </div>
+
+                <hr class="divider">
+
+                <div class="input-group">
+                    <label class="stylish-label" for="ai-toggle-setup">AI Generation:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="ai-toggle-setup">
+                        <span class="slider round"></span>
+                    </label>
                 </div>
             </div>
 
             <button id="start-game-btn" class="btn-success btn-large">Start Game</button>
+            
+            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 15px;">
+                <span class="how-to-play-link"><i class="fas fa-question-circle"></i> How to play</span>
+                <span id="clear-memory-link" class="reset-memory-link"><i class="fas fa-trash-alt"></i> Reset Deck</span>
+            </div>
         </div>
 
         <div id="turn-screen" class="screen">
@@ -91,13 +117,32 @@
                             <option value="Nature">Nature</option>
                             <option value="Places">Places</option>
                             <option value="Actions">Actions</option>
+                            <option value="Custom">Custom (AI)</option>
                         </select>
                     </div>
+                    
+                    <div class="setting-item" id="custom-cat-group-turn" style="display: none; width: 100%; justify-content: center; margin-top: 5px;">
+                        <label class="stylish-label" for="custom-cat-input-turn">Topic:</label>
+                        <input type="text" id="custom-cat-input-turn" class="stylish-input" placeholder="Type anything..." style="width: 140px;">
+                    </div>
                 </div>
+
+                <div class="settings-row ai-row">
+                    <div class="setting-item">
+                        <label class="stylish-label" for="ai-toggle-turn">AI Gen:</label>
+                        <label class="switch">
+                            <input type="checkbox" id="ai-toggle-turn">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="action-row">
                     <button id="reset-scores-btn" class="btn-danger">Reset</button>
                     <button id="start-turn-btn" class="btn-success">Start Next Round</button>
                 </div>
+                
+                <span class="how-to-play-link"><i class="fas fa-question-circle"></i> How to play</span>
             </div>
         </div>
 
@@ -112,12 +157,18 @@
             </div>
             
             <div class="card taboo-card">
-                <h2 id="target-word">WORD</h2>
-                <hr>
-                <ul id="taboo-words">
-                    <li>Taboo 1</li>
-                    <li>Taboo 2</li>
-                </ul>
+                <div id="loading-overlay" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Generating...
+                </div>
+
+                <div id="card-content">
+                    <h2 id="target-word">WORD</h2>
+                    <hr>
+                    <ul id="taboo-words">
+                        <li>Taboo 1</li>
+                        <li>Taboo 2</li>
+                    </ul>
+                </div>
             </div>
 
             <div class="controls">
@@ -129,6 +180,21 @@
             <div class="utility-controls">
                 <button id="pause-btn" class="btn-warning">Pause</button>
                 <button id="end-round-btn" class="btn-danger">End Round</button>
+            </div>
+        </div>
+
+        <div id="rules-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2><i class="fas fa-book-open"></i> How to Play</h2>
+                <ul class="aesthetic-list">
+                    <li>Divide into two teams.</li>
+                    <li>One player acts as the clue-giver. They must describe the <strong>Target Word</strong> to their team without using any of the <strong>Taboo words</strong> below it.</li>
+                    <li><span class="score-badge success">+1 point</span> for correct guesses.</li>
+                    <li><span class="score-badge danger">-1 point</span> if you accidentally say a Taboo word.</li>
+                    <li><span class="score-badge secondary">0 points</span> to skip a hard word.</li>
+                    <li>When time runs out, pass the device to the other team!</li>
+                </ul>
             </div>
         </div>
     </div>
