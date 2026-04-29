@@ -2,6 +2,7 @@
 let currentTeam = 1;
 let totalScores = { 1: 0, 2: 0 };
 let currentRoundScore = 0;
+let currentRoundWords = []; // Tracks words & outcomes for the active timer
 let roundCounter = 1;
 let historyLog = [];
 
@@ -62,10 +63,10 @@ const ui = {
 
     // Modal Elements
     rulesModal: document.getElementById('rules-modal'),
+    detailsModal: document.getElementById('round-details-modal'),
     openRulesLinks: document.querySelectorAll('.how-to-play-link'),
-    closeRulesBtn: document.querySelector('.close-btn'),
-    
-    // Clear Memory Button
+    closeRulesBtn: document.getElementById('close-rules-btn'),
+    closeDetailsBtn: document.getElementById('close-details-btn'),
     clearMemoryLink: document.getElementById('clear-memory-link')
 };
 
@@ -120,11 +121,13 @@ ui.openRulesLinks.forEach(link => {
 });
 
 ui.closeRulesBtn.addEventListener('click', () => ui.rulesModal.classList.remove('active'));
-ui.rulesModal.addEventListener('click', (e) => {
+ui.closeDetailsBtn.addEventListener('click', () => ui.detailsModal.classList.remove('active'));
+
+window.addEventListener('click', (e) => {
     if (e.target === ui.rulesModal) ui.rulesModal.classList.remove('active');
+    if (e.target === ui.detailsModal) ui.detailsModal.classList.remove('active');
 });
 
-// --- Clear Memory Listener ---
 ui.clearMemoryLink.addEventListener('click', () => {
     if (confirm("Are you sure you want to reset the deck? This will allow previously played words to appear again.")) {
         localStorage.removeItem('tabooseySeenWords');
@@ -204,6 +207,7 @@ function startTurn() {
 
     timeLeft = timeLimit;
     currentRoundScore = 0;
+    currentRoundWords = []; // Clear word history for new turn
     isPaused = false;
     isFetching = false;
     
@@ -381,6 +385,8 @@ function handleGuess(points) {
     
     if (currentCard) {
         seenWords.push(currentCard);
+        // Record the word and how many points it earned in the current turn
+        currentRoundWords.push({ word: currentCard.word, status: points });
         saveHistoryToStorage(); 
     }
     
@@ -411,13 +417,23 @@ function endTurn() {
     totalScores[currentTeam] += currentRoundScore;
     const actualRound = Math.ceil(roundCounter / 2);
     
+    // Save the round's word history along with the score
     if (currentTeam === 1) {
-        historyLog.push({ round: actualRound, t1: currentRoundScore, t2: '?' });
+        historyLog.push({ 
+            round: actualRound, 
+            t1: currentRoundScore, t1Words: [...currentRoundWords], 
+            t2: '?', t2Words: [] 
+        });
     } else {
         if (historyLog.length > 0) {
             historyLog[historyLog.length - 1].t2 = currentRoundScore;
+            historyLog[historyLog.length - 1].t2Words = [...currentRoundWords];
         } else {
-            historyLog.push({ round: actualRound, t1: '?', t2: currentRoundScore });
+            historyLog.push({ 
+                round: actualRound, 
+                t1: '?', t1Words: [], 
+                t2: currentRoundScore, t2Words: [...currentRoundWords] 
+            });
         }
     }
     
@@ -443,13 +459,37 @@ function updateTurnScreenUI() {
     if (historyLog.length === 0) {
         ui.historyList.innerHTML = `<li class="history-placeholder">No rounds played yet.</li>`;
     } else {
-        ui.historyList.innerHTML = [...historyLog].reverse().map(log => `
+        ui.historyList.innerHTML = [...historyLog].reverse().map((log, index) => {
+            // Because we reversed the array for display, we need the actual index in historyLog to open the right modal
+            const realIndex = historyLog.length - 1 - index;
+            return `
             <li class="history-item">
                 <span class="hg-round hist-round">Round ${log.round}</span>
                 <span class="hg-t1 hist-score t1-score">${log.t1}</span>
                 <span class="hg-blank hist-vs">-</span>
                 <span class="hg-t2 hist-score t2-score">${log.t2}</span>
+                <button class="details-btn" onclick="openRoundDetails(${realIndex})"><i class="fas fa-search"></i></button>
             </li>
-        `).join('');
+        `}).join('');
     }
 }
+
+// Global function to trigger the details modal from inline HTML
+window.openRoundDetails = function(index) {
+    const log = historyLog[index];
+    document.getElementById('details-round-title').innerHTML = `<i class="fas fa-list-alt"></i> Round ${log.round} Details`;
+
+    const renderWords = (words) => {
+        if (!words || words.length === 0) return `<li><span style="color:#aaa; font-weight:normal;">No words played</span></li>`;
+        return words.map(w => {
+            let icon = `<i class="fas fa-minus-circle status-icon skip"></i>`; // 0
+            if (w.status > 0) icon = `<i class="fas fa-check-circle status-icon correct"></i>`; // +1
+            if (w.status < 0) icon = `<i class="fas fa-times-circle status-icon taboo"></i>`; // -1
+            return `<li><span>${w.word}</span> ${icon}</li>`;
+        }).join('');
+    };
+
+    document.getElementById('t1-details-list').innerHTML = renderWords(log.t1Words);
+    document.getElementById('t2-details-list').innerHTML = renderWords(log.t2Words);
+    ui.detailsModal.classList.add('active');
+};

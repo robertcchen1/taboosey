@@ -92,6 +92,7 @@
                         <span class="hg-t1 t1-label">T1</span>
                         <span class="hg-blank"></span>
                         <span class="hg-t2 t2-label">T2</span>
+                        <span class="hg-details"></span>
                     </div>
                     <div class="history-container">
                         <ul id="score-history-list">
@@ -185,7 +186,7 @@
 
         <div id="rules-modal" class="modal">
             <div class="modal-content">
-                <span class="close-btn">&times;</span>
+                <span class="close-btn" id="close-rules-btn">&times;</span>
                 <h2><i class="fas fa-book-open"></i> How to Play</h2>
                 <ul class="aesthetic-list">
                     <li>Divide into two teams.</li>
@@ -197,6 +198,25 @@
                 </ul>
             </div>
         </div>
+
+        <div id="round-details-modal" class="modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <span class="close-btn" id="close-details-btn">&times;</span>
+                <h2 id="details-round-title"><i class="fas fa-list-alt"></i> Round Details</h2>
+                
+                <div class="details-teams-container">
+                    <div class="details-team">
+                        <h3 class="t1-label">Team 1</h3>
+                        <ul id="t1-details-list" class="details-list"></ul>
+                    </div>
+                    <div class="details-team">
+                        <h3 class="t2-label">Team 2</h3>
+                        <ul id="t2-details-list" class="details-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="words.js"></script>
