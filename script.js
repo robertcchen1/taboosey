@@ -61,7 +61,7 @@ const ui = {
     endRoundBtn: document.getElementById('end-round-btn'),
     gameButtons: document.querySelectorAll('.controls button'),
 
-    // Modal Elements
+    // Modal & Link Elements
     rulesModal: document.getElementById('rules-modal'),
     detailsModal: document.getElementById('round-details-modal'),
     openRulesLinks: document.querySelectorAll('.how-to-play-link'),
@@ -460,7 +460,7 @@ function updateTurnScreenUI() {
         ui.historyList.innerHTML = `<li class="history-placeholder">No rounds played yet.</li>`;
     } else {
         ui.historyList.innerHTML = [...historyLog].reverse().map((log, index) => {
-            // Because we reversed the array for display, we need the actual index in historyLog to open the right modal
+            // Reversing the array means we need to pass the real original index to openRoundDetails
             const realIndex = historyLog.length - 1 - index;
             return `
             <li class="history-item">
@@ -471,6 +471,13 @@ function updateTurnScreenUI() {
                 <button class="details-btn" onclick="openRoundDetails(${realIndex})"><i class="fas fa-search"></i></button>
             </li>
         `}).join('');
+    }
+
+    // --- REFRESH MANUAL AD ---
+    try {
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+        console.log("AdSense logic: Waiting for turn transition or script load.");
     }
 }
 
