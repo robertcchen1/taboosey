@@ -1,8 +1,15 @@
 // --- State Variables ---
+const CONFIG = {
+    STORAGE_KEYS: {
+        SEEN_WORDS: 'tabooseySeenWords',
+        AI_HISTORY: 'tabooseyAIHistory'
+    }
+};
+
 let currentTeam = 1;
 let totalScores = { 1: 0, 2: 0 };
 let currentRoundScore = 0;
-let currentRoundWords = []; // Tracks words & outcomes for the active timer
+let currentRoundWords = []; 
 let roundCounter = 1;
 let historyLog = [];
 
@@ -12,10 +19,12 @@ let customCategoryText = "";
 let timeLeft = 0;
 let timerInterval = null;
 let isPaused = false;
+let isMuted = false;
+let lastAdRefreshTime = 0;
 
 // --- Deck Tracking Variables (Loaded from LocalStorage) ---
-let seenWords = JSON.parse(localStorage.getItem('tabooseySeenWords')) || []; 
-let aiGeneratedHistory = JSON.parse(localStorage.getItem('tabooseyAIHistory')) || []; 
+let seenWords = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.SEEN_WORDS)) || []; 
+let aiGeneratedHistory = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.AI_HISTORY)) || []; 
 let unseenWords = [];
 let currentCard = null;
 
@@ -23,7 +32,55 @@ let currentCard = null;
 let useAI = false;
 let isFetching = false;
 let isBackgroundFetching = false;
-let aiBuffer = []; // Pre-fetched AI cards (The Bank)
+let aiBuffer = []; 
+
+// --- Sound Engine (Web Audio API) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function playSound(type) {
+    if (isMuted) return;
+    
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    if (type === 'correct') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    } else if (type === 'taboo') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+    } else if (type === 'skip') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+    } else if (type === 'tick') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+    }
+}
 
 // --- DOM Elements ---
 const screens = {
@@ -33,19 +90,23 @@ const screens = {
 };
 
 const ui = {
+    muteBtn: document.getElementById('global-mute-btn'),
+    homeBtn: document.getElementById('home-btn'),
+
     timeInputSetup: document.getElementById('time-limit'),
     catInputSetup: document.getElementById('setup-category'),
     customCatGroupSetup: document.getElementById('custom-cat-group-setup'),
     customCatInputSetup: document.getElementById('custom-cat-input-setup'),
-    aiToggleSetup: document.getElementById('ai-toggle-setup'),
+    errorMsgSetup: document.getElementById('error-msg-setup'),
     
     timeInputTurn: document.getElementById('turn-time-limit'),
     catInputTurn: document.getElementById('turn-category'),
     customCatGroupTurn: document.getElementById('custom-cat-group-turn'),
     customCatInputTurn: document.getElementById('custom-cat-input-turn'),
-    aiToggleTurn: document.getElementById('ai-toggle-turn'),
+    errorMsgTurn: document.getElementById('error-msg-turn'),
     
     timerDisplay: document.getElementById('timer-display'),
+    activeCard: document.getElementById('active-card'),
     targetWord: document.getElementById('target-word'),
     tabooWords: document.getElementById('taboo-words'),
     teamAnnouncement: document.getElementById('team-announcement'),
@@ -61,22 +122,63 @@ const ui = {
     endRoundBtn: document.getElementById('end-round-btn'),
     gameButtons: document.querySelectorAll('.controls button'),
 
-    // Modal & Link Elements
     rulesModal: document.getElementById('rules-modal'),
     detailsModal: document.getElementById('round-details-modal'),
+    customAlertModal: document.getElementById('custom-alert-modal'),
+    customAlertTitle: document.getElementById('custom-alert-title'),
+    customAlertMsg: document.getElementById('custom-alert-message'),
+    customAlertCancel: document.getElementById('custom-alert-cancel'),
+    customAlertConfirm: document.getElementById('custom-alert-confirm'),
+
     openRulesLinks: document.querySelectorAll('.how-to-play-link'),
     closeRulesBtn: document.getElementById('close-rules-btn'),
     closeDetailsBtn: document.getElementById('close-details-btn'),
     clearMemoryLink: document.getElementById('clear-memory-link')
 };
 
-// --- Storage Helper ---
-function saveHistoryToStorage() {
-    localStorage.setItem('tabooseySeenWords', JSON.stringify(seenWords));
-    localStorage.setItem('tabooseyAIHistory', JSON.stringify(aiGeneratedHistory));
+// --- Custom Modal Helper ---
+function showCustomModal(title, message, isConfirm, onConfirmCallback) {
+    ui.customAlertTitle.innerHTML = title;
+    ui.customAlertMsg.innerText = message;
+    
+    // Clone nodes to easily strip previous event listeners
+    const newConfirm = ui.customAlertConfirm.cloneNode(true);
+    ui.customAlertConfirm.parentNode.replaceChild(newConfirm, ui.customAlertConfirm);
+    ui.customAlertConfirm = newConfirm;
+
+    const newCancel = ui.customAlertCancel.cloneNode(true);
+    ui.customAlertCancel.parentNode.replaceChild(newCancel, ui.customAlertCancel);
+    ui.customAlertCancel = newCancel;
+
+    if (isConfirm) {
+        ui.customAlertCancel.style.display = 'block';
+        ui.customAlertConfirm.innerText = "Yes";
+        ui.customAlertConfirm.className = "btn-danger";
+    } else {
+        ui.customAlertCancel.style.display = 'none';
+        ui.customAlertConfirm.innerText = "OK";
+        ui.customAlertConfirm.className = "btn-success";
+    }
+
+    ui.customAlertConfirm.addEventListener('click', () => {
+        ui.customAlertModal.classList.remove('active');
+        if (onConfirmCallback) onConfirmCallback();
+    });
+
+    ui.customAlertCancel.addEventListener('click', () => {
+        ui.customAlertModal.classList.remove('active');
+    });
+
+    ui.customAlertModal.classList.add('active');
 }
 
-// --- Sync Logic for Toggles/Categories ---
+// --- Storage Helper ---
+function saveHistoryToStorage() {
+    localStorage.setItem(CONFIG.STORAGE_KEYS.SEEN_WORDS, JSON.stringify(seenWords));
+    localStorage.setItem(CONFIG.STORAGE_KEYS.AI_HISTORY, JSON.stringify(aiGeneratedHistory));
+}
+
+// --- Sync Logic for Categories & Mute ---
 function syncCategories(source) {
     const val = source.value;
     ui.catInputSetup.value = val;
@@ -87,7 +189,13 @@ function syncCategories(source) {
     ui.customCatGroupSetup.style.display = showCustom ? 'flex' : 'none';
     ui.customCatGroupTurn.style.display = showCustom ? 'flex' : 'none';
 
-    if (showCustom && !useAI) syncAIToggles(true);
+    if (!showCustom) {
+        ui.errorMsgSetup.style.display = 'none';
+        ui.errorMsgTurn.style.display = 'none';
+        ui.customCatInputSetup.classList.remove('input-error');
+        ui.customCatInputTurn.classList.remove('input-error');
+    }
+    useAI = showCustom;
 }
 
 function syncCustomText(source) {
@@ -95,17 +203,18 @@ function syncCustomText(source) {
     ui.customCatInputSetup.value = text;
     ui.customCatInputTurn.value = text;
     customCategoryText = text;
+
+    if (text.trim() !== "") {
+        ui.errorMsgSetup.style.display = 'none';
+        ui.errorMsgTurn.style.display = 'none';
+        ui.customCatInputSetup.classList.remove('input-error');
+        ui.customCatInputTurn.classList.remove('input-error');
+    }
 }
 
-function syncAIToggles(isChecked) {
-    useAI = isChecked;
-    ui.aiToggleSetup.checked = useAI;
-    ui.aiToggleTurn.checked = useAI;
-
-    if (!useAI && currentCategory === "Custom") {
-        ui.catInputSetup.value = "All";
-        syncCategories(ui.catInputSetup);
-    }
+function toggleMute(forceState = null) {
+    isMuted = forceState !== null ? forceState : !isMuted;
+    ui.muteBtn.innerHTML = isMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
 }
 
 // --- Event Listeners ---
@@ -113,8 +222,14 @@ ui.catInputSetup.addEventListener('change', (e) => syncCategories(e.target));
 ui.catInputTurn.addEventListener('change', (e) => syncCategories(e.target));
 ui.customCatInputSetup.addEventListener('input', (e) => syncCustomText(e.target));
 ui.customCatInputTurn.addEventListener('input', (e) => syncCustomText(e.target));
-ui.aiToggleSetup.addEventListener('change', (e) => syncAIToggles(e.target.checked));
-ui.aiToggleTurn.addEventListener('change', (e) => syncAIToggles(e.target.checked));
+
+ui.muteBtn.addEventListener('click', () => toggleMute());
+
+ui.homeBtn.addEventListener('click', () => {
+    showCustomModal('<i class="fas fa-home"></i> Quit Game?', "Return to the main menu? The current game's scores will be lost.", true, () => {
+        showScreen('setup');
+    });
+});
 
 ui.openRulesLinks.forEach(link => {
     link.addEventListener('click', () => ui.rulesModal.classList.add('active'));
@@ -126,19 +241,18 @@ ui.closeDetailsBtn.addEventListener('click', () => ui.detailsModal.classList.rem
 window.addEventListener('click', (e) => {
     if (e.target === ui.rulesModal) ui.rulesModal.classList.remove('active');
     if (e.target === ui.detailsModal) ui.detailsModal.classList.remove('active');
+    if (e.target === ui.customAlertModal) ui.customAlertModal.classList.remove('active');
 });
 
 ui.clearMemoryLink.addEventListener('click', () => {
-    if (confirm("Are you sure you want to reset the deck? This will allow previously played words to appear again.")) {
-        localStorage.removeItem('tabooseySeenWords');
-        localStorage.removeItem('tabooseyAIHistory');
-        
+    showCustomModal('<i class="fas fa-trash-alt"></i> Reset Deck?', "Are you sure you want to reset the deck? Previously played words will appear again.", true, () => {
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.SEEN_WORDS);
+        localStorage.removeItem(CONFIG.STORAGE_KEYS.AI_HISTORY);
         seenWords = [];
         aiGeneratedHistory = [];
         resetDeck();
-        
-        alert("Deck memory has been successfully wiped!");
-    }
+        showCustomModal('<i class="fas fa-check-circle"></i> Success', "Deck memory has been successfully wiped!", false);
+    });
 });
 
 document.getElementById('start-game-btn').addEventListener('click', initializeGame);
@@ -154,6 +268,9 @@ ui.endRoundBtn.addEventListener('click', endTurn);
 function showScreen(screenName) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[screenName].classList.add('active');
+    
+    // Only display the home button on the "Between Turns" screen
+    ui.homeBtn.style.display = screenName === 'turn' ? 'inline-block' : 'none';
 }
 
 function getFilteredDeck() {
@@ -167,6 +284,18 @@ function getFilteredDeck() {
     return currentCategory === "All" ? [...wordDeck] : wordDeck.filter(card => card.category === currentCategory);
 }
 
+function validateInputs(categoryInput, customInput, errorMsg) {
+    if (categoryInput.value === 'Custom' && !customInput.value.trim()) {
+        errorMsg.style.display = 'block';
+        customInput.classList.add('input-error');
+        customInput.focus();
+        return false;
+    }
+    errorMsg.style.display = 'none';
+    customInput.classList.remove('input-error');
+    return true;
+}
+
 function resetDeck() {
     let baseDeck = getFilteredDeck();
     unseenWords = baseDeck.filter(baseCard => !seenWords.some(seenCard => seenCard.word === baseCard.word));
@@ -175,10 +304,15 @@ function resetDeck() {
 }
 
 function initializeGame() {
+    if (!validateInputs(ui.catInputSetup, ui.customCatInputSetup, ui.errorMsgSetup)) return;
+
     timeLimit = parseInt(ui.timeInputSetup.value) || 60;
     syncCategories(ui.catInputSetup);
     syncCustomText(ui.customCatInputSetup);
     ui.timeInputTurn.value = timeLimit; 
+    
+    if (!audioCtx) audioCtx = new AudioContext();
+    
     resetScores();
     showScreen('turn');
 }
@@ -193,6 +327,8 @@ function resetScores() {
 }
 
 function startTurn() {
+    if (!validateInputs(ui.catInputTurn, ui.customCatInputTurn, ui.errorMsgTurn)) return;
+
     timeLimit = parseInt(ui.timeInputTurn.value) || 60;
 
     let oldCategory = currentCategory;
@@ -207,7 +343,7 @@ function startTurn() {
 
     timeLeft = timeLimit;
     currentRoundScore = 0;
-    currentRoundWords = []; // Clear word history for new turn
+    currentRoundWords = []; 
     isPaused = false;
     isFetching = false;
     
@@ -223,7 +359,15 @@ function startTurn() {
         if (!isPaused && !isFetching) {
             timeLeft--;
             ui.timerDisplay.innerText = timeLeft;
-            if (timeLeft <= 0) endTurn();
+            
+            if (timeLeft <= 10 && timeLeft > 0) {
+                playSound('tick');
+            }
+            
+            if (timeLeft <= 0) {
+                playSound('taboo');
+                endTurn();
+            }
         }
     }, 1000);
 }
@@ -253,28 +397,16 @@ async function loadNextCard() {
                 try {
                     isBackgroundFetching = true;
                     const newCards = await fetchAIBatch(5);
-                    if (newCards && newCards.length > 0) {
-                        aiBuffer.push(...newCards);
-                    }
-                } catch (e) {
-                    console.error("Batch load failed:", e);
-                } finally {
-                    isBackgroundFetching = false;
-                }
+                    if (newCards && newCards.length > 0) aiBuffer.push(...newCards);
+                } catch (e) { console.error("Batch load failed:", e); } finally { isBackgroundFetching = false; }
             }
             
             if (aiBuffer.length === 0) {
                 try {
                     isBackgroundFetching = true;
                     const emergencyCards = await fetchAIBatch(10);
-                    if (emergencyCards && emergencyCards.length > 0) {
-                        aiBuffer.push(...emergencyCards);
-                    }
-                } catch (e) {
-                    console.error("Emergency batch load failed:", e);
-                } finally {
-                    isBackgroundFetching = false;
-                }
+                    if (emergencyCards && emergencyCards.length > 0) aiBuffer.push(...emergencyCards);
+                } catch (e) { console.error("Emergency load failed:", e); } finally { isBackgroundFetching = false; }
             }
             
             setLoadingState(false);
@@ -287,7 +419,6 @@ async function loadNextCard() {
             currentCard = getNextDeckCard();
             renderCard(currentCard);
         }
-        
         maintainAIBuffer(); 
     } else {
         currentCard = getNextDeckCard();
@@ -297,29 +428,17 @@ async function loadNextCard() {
 
 async function maintainAIBuffer() {
     if (isBackgroundFetching || !useAI || isPaused) return;
-    
     if (aiBuffer.length < 3) {
         isBackgroundFetching = true;
         try {
             const newCards = await fetchAIBatch(5);
-            if (newCards && newCards.length > 0) {
-                aiBuffer.push(...newCards);
-            }
-        } catch (e) {
-            console.error("Background buffer failed", e);
-        } finally {
-            isBackgroundFetching = false;
-        }
+            if (newCards && newCards.length > 0) aiBuffer.push(...newCards);
+        } catch (e) { console.error("Background buffer failed", e); } finally { isBackgroundFetching = false; }
     }
 }
 
 async function fetchAIBatch(count = 5) {
-    let avoidWords = [
-        ...seenWords.map(c => c.word),
-        ...aiGeneratedHistory,
-        ...aiBuffer.map(c => c.word) 
-    ];
-    
+    let avoidWords = [...seenWords.map(c => c.word), ...aiGeneratedHistory, ...aiBuffer.map(c => c.word)];
     avoidWords = [...new Set(avoidWords)].filter(Boolean);
     
     let avoidPrompt = "";
@@ -328,10 +447,7 @@ async function fetchAIBatch(count = 5) {
         avoidPrompt = `\nCRITICAL: DO NOT use any of these words as the Target: ${recentAvoids.join(', ')}.`;
     }
 
-    let subject = currentCategory === "Custom" 
-        ? `the topic: "${customCategoryText || 'interesting random facts'}"` 
-        : `the category: "${currentCategory}"`;
-
+    let subject = currentCategory === "Custom" ? `the topic: "${customCategoryText || 'interesting random facts'}"` : `the category: "${currentCategory}"`;
     const prompt = `You are a Taboo game card generator. Generate exactly ${count} UNIQUE target words and 5 taboo words for each, related to ${subject}. The taboo words are the most common words people use to describe the target word.${avoidPrompt} Output ONLY valid JSON in this exact format, with no markdown styling, returning an array of exactly ${count} objects: [{"word": "Target1", "taboo": ["Word1", "Word2", "Word3", "Word4", "Word5"]}, {"word": "Target2", "taboo": ["Word1", "Word2", "Word3", "Word4", "Word5"]}]`;
     
     const proxyUrl = "https://taboosey-proxy.robertchenmit.workers.dev"; 
@@ -342,14 +458,10 @@ async function fetchAIBatch(count = 5) {
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
 
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Proxy/API Error ${response.status}: ${errText}`);
-    }
+    if (!response.ok) throw new Error(`Proxy/API Error ${response.status}: ${await response.text()}`);
 
     const data = await response.json();
-    let jsonText = data.candidates[0].content.parts[0].text;
-    jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '').trim();
+    let jsonText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
     
     const cardDataArray = JSON.parse(jsonText);
     const validCards = [];
@@ -360,7 +472,6 @@ async function fetchAIBatch(count = 5) {
             aiGeneratedHistory.push(card.word);
         }
     }
-    
     saveHistoryToStorage();
     return validCards;
 }
@@ -383,9 +494,21 @@ function handleGuess(points) {
     currentRoundScore = Math.max(0, currentRoundScore + points);
     ui.currentRoundScore.innerText = currentRoundScore;
     
+    ui.activeCard.classList.remove('flash-green', 'flash-red');
+    void ui.activeCard.offsetWidth; 
+    
+    if (points > 0) {
+        ui.activeCard.classList.add('flash-green');
+        playSound('correct');
+    } else if (points < 0) {
+        ui.activeCard.classList.add('flash-red');
+        playSound('taboo');
+    } else {
+        playSound('skip');
+    }
+
     if (currentCard) {
         seenWords.push(currentCard);
-        // Record the word and how many points it earned in the current turn
         currentRoundWords.push({ word: currentCard.word, status: points });
         saveHistoryToStorage(); 
     }
@@ -417,29 +540,19 @@ function endTurn() {
     totalScores[currentTeam] += currentRoundScore;
     const actualRound = Math.ceil(roundCounter / 2);
     
-    // Save the round's word history along with the score
     if (currentTeam === 1) {
-        historyLog.push({ 
-            round: actualRound, 
-            t1: currentRoundScore, t1Words: [...currentRoundWords], 
-            t2: '?', t2Words: [] 
-        });
+        historyLog.push({ round: actualRound, t1: currentRoundScore, t1Words: [...currentRoundWords], t2: '?', t2Words: [] });
     } else {
         if (historyLog.length > 0) {
             historyLog[historyLog.length - 1].t2 = currentRoundScore;
             historyLog[historyLog.length - 1].t2Words = [...currentRoundWords];
         } else {
-            historyLog.push({ 
-                round: actualRound, 
-                t1: '?', t1Words: [], 
-                t2: currentRoundScore, t2Words: [...currentRoundWords] 
-            });
+            historyLog.push({ round: actualRound, t1: '?', t1Words: [], t2: currentRoundScore, t2Words: [...currentRoundWords] });
         }
     }
     
     currentTeam = currentTeam === 1 ? 2 : 1;
     roundCounter++;
-    
     aiBuffer = [];
     
     updateTurnScreenUI();
@@ -451,16 +564,13 @@ function updateTurnScreenUI() {
     ui.t2ScoreDisplay.innerText = totalScores[2];
     
     let announcement = `Team ${currentTeam}'s Turn`;
-    if (roundCounter > 1) {
-        announcement = `Time's Up! ` + announcement;
-    }
+    if (roundCounter > 1) announcement = `Time's Up! ` + announcement;
     ui.teamAnnouncement.innerText = announcement;
 
     if (historyLog.length === 0) {
         ui.historyList.innerHTML = `<li class="history-placeholder">No rounds played yet.</li>`;
     } else {
         ui.historyList.innerHTML = [...historyLog].reverse().map((log, index) => {
-            // Reversing the array means we need to pass the real original index to openRoundDetails
             const realIndex = historyLog.length - 1 - index;
             return `
             <li class="history-item">
@@ -473,15 +583,17 @@ function updateTurnScreenUI() {
         `}).join('');
     }
 
-    // --- REFRESH MANUAL AD ---
-    try {
-        (adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (e) {
-        console.log("AdSense logic: Waiting for turn transition or script load.");
+    const now = Date.now();
+    if (now - lastAdRefreshTime > 30000) {
+        try {
+            (adsbygoogle = window.adsbygoogle || []).push({});
+            lastAdRefreshTime = now;
+        } catch (e) {
+            console.log("AdSense logic skipped or failed.");
+        }
     }
 }
 
-// Global function to trigger the details modal from inline HTML
 window.openRoundDetails = function(index) {
     const log = historyLog[index];
     document.getElementById('details-round-title').innerHTML = `<i class="fas fa-list-alt"></i> Round ${log.round} Details`;
@@ -489,9 +601,9 @@ window.openRoundDetails = function(index) {
     const renderWords = (words) => {
         if (!words || words.length === 0) return `<li><span style="color:#aaa; font-weight:normal;">No words played</span></li>`;
         return words.map(w => {
-            let icon = `<i class="fas fa-minus-circle status-icon skip"></i>`; // 0
-            if (w.status > 0) icon = `<i class="fas fa-check-circle status-icon correct"></i>`; // +1
-            if (w.status < 0) icon = `<i class="fas fa-times-circle status-icon taboo"></i>`; // -1
+            let icon = `<i class="fas fa-minus-circle status-icon skip"></i>`;
+            if (w.status > 0) icon = `<i class="fas fa-check-circle status-icon correct"></i>`;
+            if (w.status < 0) icon = `<i class="fas fa-times-circle status-icon taboo"></i>`;
             return `<li><span>${w.word}</span> ${icon}</li>`;
         }).join('');
     };

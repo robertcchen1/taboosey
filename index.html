@@ -2,9 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Taboosey: Online Taboo Word Game</title>
     
+    <meta name="description" content="Describe the word without saying the Taboo words! Play instantly on your phone.">
+    <meta property="og:title" content="Taboosey: Online Taboo Word Game">
+    <meta property="og:description" content="Describe the word without saying the Taboo words! Play instantly on your phone.">
+    <meta property="og:image" content="https://taboosey.com/social-preview-image.png">
+    <meta property="og:url" content="https://taboosey.com">
+    <meta name="theme-color" content="#1a1a1a">
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+
     <meta name="google-adsense-account" content="ca-pub-7570484814519250">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7570484814519250" crossorigin="anonymous"></script>
 
@@ -13,6 +23,11 @@
 </head>
 <body>
     <div id="app">
+        <div class="global-controls">
+            <button id="home-btn" class="icon-btn" style="display: none;"><i class="fas fa-home"></i></button>
+            <button id="global-mute-btn" class="icon-btn"><i class="fas fa-volume-up"></i></button>
+        </div>
+
         <div id="setup-screen" class="screen active">
             <div class="title-area">
                 <i class="fas fa-cat main-cat-icon"></i>
@@ -22,7 +37,8 @@
             
             <div class="brief-rules">
                 <p style="margin-top: 0; margin-bottom: 10px;">Describe the <strong>Target Word</strong> to your team without saying any of the <strong>Taboo words</strong>!</p>
-                <p style="margin: 0;">Score <span class="score-badge success">+1</span> for correct guesses, and <span class="score-badge danger">-1</span> if you accidentally say a Taboo word.</p>
+                <p style="margin: 0; margin-bottom: 10px;">Score <span class="score-badge success">+1</span> for correct guesses, and <span class="score-badge danger">-1</span> if you accidentally say a Taboo word.</p>
+                <p style="margin: 0; font-weight: bold; color: #e67e22;"><i class="fas fa-lightbulb"></i> Choose a category, or select Custom (AI) to create your own!</p>
             </div>
             
             <div class="settings-container">
@@ -48,28 +64,23 @@
                     </select>
                 </div>
                 
-                <div class="input-group" id="custom-cat-group-setup" style="display: none;">
-                    <label class="stylish-label" for="custom-cat-input-setup">Topic:</label>
-                    <input type="text" id="custom-cat-input-setup" class="stylish-input" placeholder="Type anything...">
-                </div>
-
-                <hr class="divider">
-
-                <div class="input-group">
-                    <label class="stylish-label" for="ai-toggle-setup">AI Generation:</label>
-                    <label class="switch">
-                        <input type="checkbox" id="ai-toggle-setup">
-                        <span class="slider round"></span>
-                    </label>
+                <div class="input-group" id="custom-cat-group-setup" style="display: none; align-items: flex-start;">
+                    <label class="stylish-label" for="custom-cat-input-setup" style="margin-top: 10px;">Topic:</label>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; width: 100%;">
+                        <input type="text" id="custom-cat-input-setup" class="stylish-input" placeholder="Type anything..." style="width: 100%; box-sizing: border-box;">
+                        <span id="error-msg-setup" class="error-text">Please enter a topic!</span>
+                    </div>
                 </div>
             </div>
 
             <button id="start-game-btn" class="btn-success btn-large">Start Game</button>
             
-            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 15px;">
+            <div class="bottom-links-container">
                 <span class="how-to-play-link"><i class="fas fa-question-circle"></i> How to play</span>
                 <span id="clear-memory-link" class="reset-memory-link"><i class="fas fa-trash-alt"></i> Reset Deck</span>
             </div>
+            
+            <a href="mailto:feedback@taboosey.com?subject=Taboosey%20Feedback" class="contact-link"><i class="fas fa-envelope"></i> Contact & Feedback</a>
         </div>
 
         <div id="turn-screen" class="screen">
@@ -135,19 +146,12 @@
                         </select>
                     </div>
                     
-                    <div class="setting-item" id="custom-cat-group-turn" style="display: none; width: 100%; justify-content: center; margin-top: 5px;">
-                        <label class="stylish-label" for="custom-cat-input-turn">Topic:</label>
-                        <input type="text" id="custom-cat-input-turn" class="stylish-input" placeholder="Type anything..." style="width: 140px;">
-                    </div>
-                </div>
-
-                <div class="settings-row ai-row">
-                    <div class="setting-item">
-                        <label class="stylish-label" for="ai-toggle-turn">AI Gen:</label>
-                        <label class="switch">
-                            <input type="checkbox" id="ai-toggle-turn">
-                            <span class="slider round"></span>
-                        </label>
+                    <div class="setting-item" id="custom-cat-group-turn" style="display: none; width: 100%; justify-content: center; flex-direction: column; margin-top: 5px;">
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                            <label class="stylish-label" for="custom-cat-input-turn">Topic:</label>
+                            <input type="text" id="custom-cat-input-turn" class="stylish-input" placeholder="Type anything..." style="width: 140px;">
+                        </div>
+                        <span id="error-msg-turn" class="error-text">Please enter a topic!</span>
                     </div>
                 </div>
 
@@ -170,9 +174,10 @@
                 </div>
             </div>
             
-            <div class="card taboo-card">
+            <div class="card taboo-card" id="active-card">
                 <div id="loading-overlay" style="display: none;">
-                    <i class="fas fa-spinner fa-spin"></i> Generating...
+                    <i class="fas fa-spinner fa-spin"></i> Generating...<br>
+                    <span style="font-size: 1rem; color: #7f8c8d; font-weight: normal;">(timer paused)</span>
                 </div>
 
                 <div id="card-content">
@@ -226,6 +231,17 @@
                         <h3 class="t2-label">Team 2</h3>
                         <ul id="t2-details-list" class="details-list"></ul>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="custom-alert-modal" class="modal">
+            <div class="modal-content" style="max-width: 320px; text-align: center;">
+                <h2 id="custom-alert-title" style="border: none; padding-bottom: 0; margin-bottom: 10px;">Notice</h2>
+                <p id="custom-alert-message" style="margin: 10px 0 20px 0; color: #444; font-size: 1.05rem; line-height: 1.4;"></p>
+                <div class="action-row">
+                    <button id="custom-alert-cancel" class="btn-secondary">Cancel</button>
+                    <button id="custom-alert-confirm" class="btn-danger">Confirm</button>
                 </div>
             </div>
         </div>
