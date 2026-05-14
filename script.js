@@ -2,7 +2,7 @@
 const CONFIG = {
     STORAGE_KEYS: {
         SEEN_WORDS: 'tabooseySeenWords',
-        AI_HISTORY: 'tabooseyAIHistory'
+        AI_DECK: 'tabooseyAIDeck' 
     }
 };
 
@@ -24,9 +24,14 @@ let lastAdRefreshTime = 0;
 
 // --- Deck Tracking Variables (Loaded from LocalStorage) ---
 let seenWords = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.SEEN_WORDS)) || []; 
-let aiGeneratedHistory = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.AI_HISTORY)) || []; 
+let aiDeck = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.AI_DECK)) || []; 
 let unseenWords = [];
 let currentCard = null;
+
+// --- Clean up legacy string-based history if it exists ---
+if (localStorage.getItem('tabooseyAIHistory')) {
+    localStorage.removeItem('tabooseyAIHistory');
+}
 
 // --- AI Configuration ---
 let useAI = false;
@@ -44,55 +49,57 @@ function playSound(type) {
     if (!audioCtx) audioCtx = new AudioContext();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
 
-    // Fade in to prevent clicking sounds at the start of the tone
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
+    // Helper function to create true overlapping chimes
+    const playChime = (freq, startTime, duration) => {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        osc.type = 'sine'; // Pure tone for a bell/chime feel
+        osc.frequency.setValueAtTime(freq, startTime);
+        
+        // Percussive bell envelope: fast attack, long smooth fade out
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.25, startTime + 0.02); 
+        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration); 
+        
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+    };
 
     if (type === 'correct') {
-        // Softer, pleasant chime (Triangle wave, C5 to E5)
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
-        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); 
-        
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.3);
+        // Lowered pitch: Happy ascending chime (C5 -> E5)
+        playChime(523.25, t, 0.5); 
+        playChime(659.25, t + 0.1, 0.7); 
         
     } else if (type === 'taboo') {
-        // Soft low boop instead of a harsh sawtooth buzz
-        osc.type = 'triangle'; 
-        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
-        
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
+        // Kept taboo at the same soft octave for balance (Eb5 -> C5)
+        playChime(622.25, t, 0.5);
+        playChime(523.25, t + 0.15, 0.7);
         
     } else if (type === 'skip') {
-        // Gentle soft blip
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.15);
-        
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.15);
+        // Single neutral chime (G5)
+        playChime(783.99, t, 0.4);
         
     } else if (type === 'tick') {
-        // Unobtrusive tick
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        // Soft UI tick
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
         
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.05);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1000, t);
+        
+        gainNode.gain.setValueAtTime(0, t);
+        gainNode.gain.linearRampToValueAtTime(0.05, t + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        
+        osc.start(t);
+        osc.stop(t + 0.1);
     }
 }
 
@@ -150,7 +157,6 @@ const ui = {
     clearMemoryLink: document.getElementById('clear-memory-link')
 };
 
-// --- Custom Modal Helper ---
 function showCustomModal(title, message, isConfirm, onConfirmCallback) {
     ui.customAlertTitle.innerHTML = title;
     ui.customAlertMsg.innerText = message;
@@ -185,13 +191,11 @@ function showCustomModal(title, message, isConfirm, onConfirmCallback) {
     ui.customAlertModal.classList.add('active');
 }
 
-// --- Storage Helper ---
 function saveHistoryToStorage() {
     localStorage.setItem(CONFIG.STORAGE_KEYS.SEEN_WORDS, JSON.stringify(seenWords));
-    localStorage.setItem(CONFIG.STORAGE_KEYS.AI_HISTORY, JSON.stringify(aiGeneratedHistory));
+    localStorage.setItem(CONFIG.STORAGE_KEYS.AI_DECK, JSON.stringify(aiDeck));
 }
 
-// --- Sync Logic for Categories & Mute ---
 function syncCategories(source) {
     const val = source.value;
     ui.catInputSetup.value = val;
@@ -230,7 +234,6 @@ function toggleMute(forceState = null) {
     ui.muteBtn.innerHTML = isMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
 }
 
-// --- Outer Webpage Navigation Logic ---
 const navTabs = document.querySelectorAll('.nav-tab');
 const sitePages = document.querySelectorAll('.site-page');
 
@@ -244,7 +247,6 @@ navTabs.forEach(tab => {
     });
 });
 
-// --- Event Listeners ---
 ui.catInputSetup.addEventListener('change', (e) => syncCategories(e.target));
 ui.catInputTurn.addEventListener('change', (e) => syncCategories(e.target));
 ui.customCatInputSetup.addEventListener('input', (e) => syncCustomText(e.target));
@@ -275,9 +277,9 @@ if (ui.clearMemoryLink) {
     ui.clearMemoryLink.addEventListener('click', () => {
         showCustomModal('<i class="fas fa-trash-alt"></i> Reset Deck?', "Are you sure you want to reset the deck? Previously played words will appear again.", true, () => {
             localStorage.removeItem(CONFIG.STORAGE_KEYS.SEEN_WORDS);
-            localStorage.removeItem(CONFIG.STORAGE_KEYS.AI_HISTORY);
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.AI_DECK);
             seenWords = [];
-            aiGeneratedHistory = [];
+            aiDeck = [];
             resetDeck();
             showCustomModal('<i class="fas fa-check-circle"></i> Success', "Deck memory has been successfully wiped!", false);
         });
@@ -293,12 +295,9 @@ document.getElementById('taboo-btn').addEventListener('click', () => handleGuess
 ui.pauseBtn.addEventListener('click', togglePause);
 ui.endRoundBtn.addEventListener('click', endTurn);
 
-// --- Functions ---
 function showScreen(screenName) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[screenName].classList.add('active');
-    
-    // Only display the home button on the "Between Turns" screen
     ui.homeBtn.style.display = screenName === 'turn' ? 'flex' : 'none';
 }
 
@@ -412,8 +411,27 @@ function getNextDeckCard() {
     return unseenWords.splice(randomIndex, 1)[0]; 
 }
 
+function fillBufferFromLocal() {
+    if (!useAI) return;
+    const currentTopic = customCategoryText.trim().toLowerCase();
+    
+    const availableLocalCards = aiDeck.filter(c => 
+        c.topic === currentTopic && 
+        !seenWords.some(sw => sw.word === c.word) &&
+        !aiBuffer.some(buf => buf.word === c.word)
+    );
+    
+    availableLocalCards.sort(() => Math.random() - 0.5);
+    
+    while(aiBuffer.length < 5 && availableLocalCards.length > 0) {
+        aiBuffer.push(availableLocalCards.pop());
+    }
+}
+
 async function loadNextCard() {
     if (useAI) {
+        fillBufferFromLocal();
+
         if (aiBuffer.length === 0) {
             setLoadingState(true);
             
@@ -456,6 +474,9 @@ async function loadNextCard() {
 
 async function maintainAIBuffer() {
     if (isBackgroundFetching || !useAI || isPaused) return;
+    
+    fillBufferFromLocal();
+    
     if (aiBuffer.length < 3) {
         isBackgroundFetching = true;
         try {
@@ -466,7 +487,7 @@ async function maintainAIBuffer() {
 }
 
 async function fetchAIBatch(count = 5) {
-    let avoidWords = [...seenWords.map(c => c.word), ...aiGeneratedHistory, ...aiBuffer.map(c => c.word)];
+    let avoidWords = [...seenWords.map(c => c.word), ...aiDeck.map(c => c.word), ...aiBuffer.map(c => c.word)];
     avoidWords = [...new Set(avoidWords)].filter(Boolean);
     
     let avoidPrompt = "";
@@ -475,6 +496,7 @@ async function fetchAIBatch(count = 5) {
         avoidPrompt = `\nCRITICAL: DO NOT use any of these words as the Target: ${recentAvoids.join(', ')}.`;
     }
 
+    const currentTopic = customCategoryText.trim().toLowerCase();
     let subject = currentCategory === "Custom" ? `the topic: "${customCategoryText || 'interesting random facts'}"` : `the category: "${currentCategory}"`;
     const prompt = `You are a Taboo game card generator. Generate exactly ${count} UNIQUE target words and 5 taboo words for each, related to ${subject}. The taboo words are the most common words people use to describe the target word.${avoidPrompt} Output ONLY valid JSON in this exact format, with no markdown styling, returning an array of exactly ${count} objects: [{"word": "Target1", "taboo": ["Word1", "Word2", "Word3", "Word4", "Word5"]}, {"word": "Target2", "taboo": ["Word1", "Word2", "Word3", "Word4", "Word5"]}]`;
     
@@ -496,8 +518,11 @@ async function fetchAIBatch(count = 5) {
 
     for (let card of cardDataArray) {
         if (!avoidWords.includes(card.word) && !validCards.some(v => v.word === card.word)) {
+            card.category = "Custom";
+            card.topic = currentTopic;
+            
             validCards.push(card);
-            aiGeneratedHistory.push(card.word);
+            aiDeck.push(card); 
         }
     }
     saveHistoryToStorage();
@@ -581,6 +606,7 @@ function endTurn() {
     
     currentTeam = currentTeam === 1 ? 2 : 1;
     roundCounter++;
+    
     aiBuffer = [];
     
     updateTurnScreenUI();
@@ -641,7 +667,6 @@ window.openRoundDetails = function(index) {
     ui.detailsModal.classList.add('active');
 };
 
-// --- Native Android App Controls ---
 if (window.Capacitor) {
     const { App } = Capacitor.Plugins;
 
