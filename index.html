@@ -5,16 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Taboosey: Online Taboo Word Game</title>
     
+    <!-- Standard Favicons (Removed leading slash for safety in all environments) -->
+    <link rel="icon" type="image/png" href="icon.png?v=2">
+    <link rel="apple-touch-icon" href="icon.png?v=2">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- SEO & Social Sharing Tags -->
     <meta name="description" content="Describe the word without saying the Taboo words! Play instantly on your phone.">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://taboosey.com/">
     <meta property="og:title" content="Taboosey: Online Taboo Word Game">
     <meta property="og:description" content="Describe the word without saying the Taboo words! Play instantly on your phone.">
     <meta property="og:image" content="https://taboosey.com/social-preview-image.png">
-    <meta property="og:url" content="https://taboosey.com">
-    <meta name="theme-color" content="#1a1a1a">
-    
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
 
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Taboosey">
+    <meta name="twitter:description" content="Describe the word without saying the Taboo words!">
+    <meta name="twitter:image" content="https://taboosey.com/social-preview-image.png">
+
+    <!-- Google AdSense -->
     <meta name="google-adsense-account" content="ca-pub-7570484814519250">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7570484814519250" crossorigin="anonymous"></script>
 
@@ -22,230 +35,298 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
-        <div class="global-controls">
-            <button id="home-btn" class="icon-btn" style="display: none;"><i class="fas fa-home"></i></button>
-            <button id="global-mute-btn" class="icon-btn"><i class="fas fa-volume-up"></i></button>
+
+    <!-- OUTER WEBPAGE NAVIGATION -->
+    <nav class="top-nav">
+        <div class="nav-content">
+            <div class="logo"><i class="fas fa-cat"></i> Taboosey</div>
+            <div class="nav-links">
+                <button class="nav-tab active" data-target="page-play">Play</button>
+                <button class="nav-tab" data-target="page-guide">Guide</button>
+                <button class="nav-tab" data-target="page-about">About</button>
+            </div>
         </div>
+    </nav>
 
-        <div id="setup-screen" class="screen active">
-            <div class="title-area">
-                <i class="fas fa-cat main-cat-icon"></i>
-                <h1>Taboosey</h1>
-                <p class="subtitle">Online Taboo Word Game</p>
-            </div>
-            
-            <div class="brief-rules">
-                <p style="margin-top: 0; margin-bottom: 10px;">Describe the <strong>Target Word</strong> to your team without saying any of the <strong>Taboo words</strong>!</p>
-                <p style="margin: 0; margin-bottom: 10px;">Score <span class="score-badge success">+1</span> for correct guesses, and <span class="score-badge danger">-1</span> if you accidentally say a Taboo word.</p>
-                <p style="margin: 0; font-weight: bold; color: #e67e22;"><i class="fas fa-lightbulb"></i> Choose a category, or select Custom (AI) to create your own!</p>
-            </div>
-            
-            <div class="settings-container">
-                <div class="input-group">
-                    <label class="stylish-label" for="time-limit">Time Limit:</label>
-                    <div class="input-wrap">
-                        <input type="number" id="time-limit" value="60" min="10" max="120">
-                        <span class="unit">sec</span>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label class="stylish-label" for="setup-category">Category:</label>
-                    <select id="setup-category" class="stylish-input">
-                        <option value="All">All Categories</option>
-                        <option value="Food">Food & Drink</option>
-                        <option value="Animals">Animals</option>
-                        <option value="Tech">Technology</option>
-                        <option value="Nature">Nature</option>
-                        <option value="Places">Places & Locations</option>
-                        <option value="Actions">Actions & Verbs</option>
-                        <option value="Custom">Custom (AI)</option>
-                    </select>
-                </div>
+    <!-- PAGE 1: PLAY (The Game Itself) -->
+    <main id="page-play" class="site-page active">
+        <div class="app-wrapper">
+            <div id="app">
                 
-                <div class="input-group" id="custom-cat-group-setup" style="display: none; align-items: flex-start;">
-                    <label class="stylish-label" for="custom-cat-input-setup" style="margin-top: 10px;">Topic:</label>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; width: 100%;">
-                        <input type="text" id="custom-cat-input-setup" class="stylish-input" placeholder="Type anything..." style="width: 100%; box-sizing: border-box;">
-                        <span id="error-msg-setup" class="error-text">Please enter a topic!</span>
+                <!-- Integrated Top Utility Bar -->
+                <div class="game-top-bar">
+                    <button id="home-btn" class="top-bar-btn" style="display: none;"><i class="fas fa-home"></i> Menu</button>
+                    <div style="flex: 1;"></div>
+                    <button id="global-mute-btn" class="top-bar-btn"><i class="fas fa-volume-up"></i></button>
+                </div>
+
+                <!-- Setup Screen -->
+                <div id="setup-screen" class="screen active">
+                    <div class="title-area">
+                        <i class="fas fa-cat main-cat-icon"></i>
+                        <h1>Taboosey</h1>
+                        <p class="subtitle">Online Taboo Word Game</p>
+                    </div>
+                    
+                    <div class="brief-rules">
+                        <p style="margin-top: 0; margin-bottom: 10px;">Describe the <strong>Target Word</strong> to your team without saying any of the <strong>Taboo words</strong>!</p>
+                        <p style="margin: 0; margin-bottom: 10px;">Score <span class="score-badge success">+1</span> for correct guesses, and <span class="score-badge danger">-1</span> if you accidentally say a Taboo word.</p>
+                    </div>
+                    
+                    <div class="settings-container">
+                        <div class="input-group">
+                            <label class="stylish-label" for="time-limit">Time Limit:</label>
+                            <div class="input-wrap">
+                                <input type="number" id="time-limit" value="60" min="10" max="120">
+                                <span class="unit">sec</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="stylish-label" for="setup-category">Category:</label>
+                            <select id="setup-category" class="stylish-input">
+                                <option value="All">All Categories</option>
+                                <option value="Food">Food & Drink</option>
+                                <option value="Animals">Animals</option>
+                                <option value="Tech">Technology</option>
+                                <option value="Nature">Nature</option>
+                                <option value="Places">Places & Locations</option>
+                                <option value="Actions">Actions & Verbs</option>
+                                <option value="Custom">Custom (AI)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group" id="custom-cat-group-setup" style="display: none; align-items: flex-start;">
+                            <label class="stylish-label" for="custom-cat-input-setup" style="margin-top: 10px;">Topic:</label>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; width: 100%;">
+                                <input type="text" id="custom-cat-input-setup" class="stylish-input" placeholder="Type anything..." style="width: 100%; box-sizing: border-box;">
+                                <span id="error-msg-setup" class="error-text">Please enter a topic!</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="start-game-btn" class="btn-success btn-large">Start Game</button>
+                    
+                    <div class="bottom-links-container">
+                        <span class="how-to-play-link"><i class="fas fa-question-circle"></i> How to play</span>
+                        <span id="clear-memory-link" class="reset-memory-link"><i class="fas fa-trash-alt"></i> Reset Deck</span>
                     </div>
                 </div>
-            </div>
 
-            <button id="start-game-btn" class="btn-success btn-large">Start Game</button>
-            
-            <div class="bottom-links-container">
-                <span class="how-to-play-link"><i class="fas fa-question-circle"></i> How to play</span>
-                <span id="clear-memory-link" class="reset-memory-link"><i class="fas fa-trash-alt"></i> Reset Deck</span>
-            </div>
-            
-            <a href="mailto:feedback@taboosey.com?subject=Taboosey%20Feedback" class="contact-link"><i class="fas fa-envelope"></i> Contact & Feedback</a>
-        </div>
-
-        <div id="turn-screen" class="screen">
-            <div class="turn-header">
-                <h2 id="team-announcement">Team 1's Turn</h2>
-            </div>
-            
-            <div class="stats-panel">
-                <div class="team-totals">
-                    <div class="team-stat">
-                        <h3 class="t1-label">Team 1</h3>
-                        <span id="t1-score-display" class="big-score t1-score">0</span>
+                <!-- Between Turns Screen -->
+                <div id="turn-screen" class="screen">
+                    <div class="turn-header">
+                        <h2 id="team-announcement">Team 1's Turn</h2>
                     </div>
-                    <div class="team-stat">
-                        <h3 class="t2-label">Team 2</h3>
-                        <span id="t2-score-display" class="big-score t2-score">0</span>
+                    
+                    <div class="stats-panel">
+                        <div class="team-totals">
+                            <div class="team-stat">
+                                <h3 class="t1-label">Team 1</h3>
+                                <span id="t1-score-display" class="big-score t1-score">0</span>
+                            </div>
+                            <div class="team-stat">
+                                <h3 class="t2-label">Team 2</h3>
+                                <span id="t2-score-display" class="big-score t2-score">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="history-section">
+                            <h3>Round History</h3>
+                            <div class="history-grid-header">
+                                <span class="hg-round">Round</span>
+                                <span class="hg-t1 t1-label">T1</span>
+                                <span class="hg-blank"></span>
+                                <span class="hg-t2 t2-label">T2</span>
+                                <span class="hg-details"></span>
+                            </div>
+                            <div class="history-container">
+                                <ul id="score-history-list">
+                                    <li class="history-placeholder">No rounds played yet.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MANUAL AD SLOT -->
+                    <div class="ad-container-manual" style="margin: 15px 0; min-height: 90px; overflow: hidden;">
+                        <ins class="adsbygoogle"
+                             style="display:block"
+                             data-ad-client="ca-pub-7570484814519250"
+                             data-ad-slot="REPLACE_WITH_YOUR_AD_SLOT_ID"
+                             data-ad-format="horizontal"
+                             data-full-width-responsive="true"></ins>
+                    </div>
+
+                    <div class="turn-controls">
+                        <div class="settings-row">
+                            <div class="setting-item">
+                                <label class="stylish-label" for="turn-time-limit">Time:</label>
+                                <input type="number" id="turn-time-limit" class="small-input" value="60" min="10" max="120">
+                            </div>
+                            <div class="setting-item">
+                                <label class="stylish-label" for="turn-category">Category:</label>
+                                <select id="turn-category" class="stylish-input small-select">
+                                    <option value="All">All</option>
+                                    <option value="Food">Food</option>
+                                    <option value="Animals">Animals</option>
+                                    <option value="Tech">Tech</option>
+                                    <option value="Nature">Nature</option>
+                                    <option value="Places">Places</option>
+                                    <option value="Actions">Actions</option>
+                                    <option value="Custom">Custom (AI)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="setting-item" id="custom-cat-group-turn" style="display: none; width: 100%; justify-content: center; flex-direction: column; margin-top: 5px;">
+                                <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                                    <label class="stylish-label" for="custom-cat-input-turn">Topic:</label>
+                                    <input type="text" id="custom-cat-input-turn" class="stylish-input" placeholder="Type anything..." style="width: 140px;">
+                                </div>
+                                <span id="error-msg-turn" class="error-text">Please enter a topic!</span>
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <button id="reset-scores-btn" class="btn-danger">Reset</button>
+                            <button id="start-turn-btn" class="btn-success">Start Next Round</button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="history-section">
-                    <h3>Round History</h3>
-                    <div class="history-grid-header">
-                        <span class="hg-round">Round</span>
-                        <span class="hg-t1 t1-label">T1</span>
-                        <span class="hg-blank"></span>
-                        <span class="hg-t2 t2-label">T2</span>
-                        <span class="hg-details"></span>
+
+                <!-- Active Game Screen -->
+                <div id="game-screen" class="screen">
+                    <div class="header">
+                        <div class="timer-wrap">
+                            <span id="timer-display">60</span>s
+                        </div>
+                        <div class="score-wrap">
+                            Score: <span id="current-round-score">0</span>
+                        </div>
                     </div>
-                    <div class="history-container">
-                        <ul id="score-history-list">
-                            <li class="history-placeholder">No rounds played yet.</li>
+                    
+                    <div class="card taboo-card" id="active-card">
+                        <div id="loading-overlay" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> Generating...<br>
+                            <span style="font-size: 1rem; color: #7f8c8d; font-weight: normal;">(timer paused)</span>
+                        </div>
+
+                        <div id="card-content">
+                            <h2 id="target-word">WORD</h2>
+                            <hr>
+                            <ul id="taboo-words">
+                                <li>Taboo 1</li>
+                                <li>Taboo 2</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button id="taboo-btn" class="btn-danger">Taboo (-1)</button>
+                        <button id="skip-btn" class="btn-secondary">Skip (0)</button>
+                        <button id="correct-btn" class="btn-success">Correct (+1)</button>
+                    </div>
+                    
+                    <div class="utility-controls">
+                        <button id="pause-btn" class="btn-warning">Pause</button>
+                        <button id="end-round-btn" class="btn-danger">End Round</button>
+                    </div>
+                </div>
+
+                <!-- Rules Modal -->
+                <div id="rules-modal" class="modal">
+                    <div class="modal-content">
+                        <span class="close-btn" id="close-rules-btn">&times;</span>
+                        <h2><i class="fas fa-book-open"></i> How to Play</h2>
+                        <ul class="aesthetic-list">
+                            <li>Divide into two teams.</li>
+                            <li>One player acts as the clue-giver. They must describe the <strong>Target Word</strong> to their team without using any of the <strong>Taboo words</strong> below it.</li>
+                            <li><span class="score-badge success">+1 point</span> for correct guesses.</li>
+                            <li><span class="score-badge danger">-1 point</span> if you accidentally say a Taboo word.</li>
+                            <li><span class="score-badge secondary">0 points</span> to skip a hard word.</li>
+                            <li>When time runs out, pass the device to the other team!</li>
                         </ul>
                     </div>
                 </div>
-            </div>
 
-            <div class="ad-container-manual" style="margin: 15px 0; min-height: 90px; overflow: hidden;">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-7570484814519250"
-                     data-ad-slot="REPLACE_WITH_YOUR_AD_SLOT_ID"
-                     data-ad-format="horizontal"
-                     data-full-width-responsive="true"></ins>
-            </div>
-
-            <div class="turn-controls">
-                <div class="settings-row">
-                    <div class="setting-item">
-                        <label class="stylish-label" for="turn-time-limit">Time:</label>
-                        <input type="number" id="turn-time-limit" class="small-input" value="60" min="10" max="120">
-                    </div>
-                    <div class="setting-item">
-                        <label class="stylish-label" for="turn-category">Category:</label>
-                        <select id="turn-category" class="stylish-input small-select">
-                            <option value="All">All</option>
-                            <option value="Food">Food</option>
-                            <option value="Animals">Animals</option>
-                            <option value="Tech">Tech</option>
-                            <option value="Nature">Nature</option>
-                            <option value="Places">Places</option>
-                            <option value="Actions">Actions</option>
-                            <option value="Custom">Custom (AI)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="setting-item" id="custom-cat-group-turn" style="display: none; width: 100%; justify-content: center; flex-direction: column; margin-top: 5px;">
-                        <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
-                            <label class="stylish-label" for="custom-cat-input-turn">Topic:</label>
-                            <input type="text" id="custom-cat-input-turn" class="stylish-input" placeholder="Type anything..." style="width: 140px;">
+                <!-- Round Details Modal -->
+                <div id="round-details-modal" class="modal">
+                    <div class="modal-content" style="max-width: 450px;">
+                        <span class="close-btn" id="close-details-btn">&times;</span>
+                        <h2 id="details-round-title"><i class="fas fa-list-alt"></i> Round Details</h2>
+                        
+                        <div class="details-teams-container">
+                            <div class="details-team">
+                                <h3 class="t1-label">Team 1</h3>
+                                <ul id="t1-details-list" class="details-list"></ul>
+                            </div>
+                            <div class="details-team">
+                                <h3 class="t2-label">Team 2</h3>
+                                <ul id="t2-details-list" class="details-list"></ul>
+                            </div>
                         </div>
-                        <span id="error-msg-turn" class="error-text">Please enter a topic!</span>
                     </div>
                 </div>
 
-                <div class="action-row">
-                    <button id="reset-scores-btn" class="btn-danger">Reset</button>
-                    <button id="start-turn-btn" class="btn-success">Start Next Round</button>
+                <!-- Custom Alert Modal -->
+                <div id="custom-alert-modal" class="modal">
+                    <div class="modal-content" style="max-width: 320px; text-align: center;">
+                        <h2 id="custom-alert-title" style="border: none; padding-bottom: 0; margin-bottom: 10px;">Notice</h2>
+                        <p id="custom-alert-message" style="margin: 10px 0 20px 0; color: #444; font-size: 1.05rem; line-height: 1.4;"></p>
+                        <div class="action-row">
+                            <button id="custom-alert-cancel" class="btn-secondary">Cancel</button>
+                            <button id="custom-alert-confirm" class="btn-danger">Confirm</button>
+                        </div>
+                    </div>
                 </div>
-                
-                <span class="how-to-play-link"><i class="fas fa-question-circle"></i> How to play</span>
             </div>
         </div>
+    </main>
 
-        <div id="game-screen" class="screen">
-            <div class="header">
-                <div class="timer-wrap">
-                    <span id="timer-display">60</span>s
-                </div>
-                <div class="score-wrap">
-                    Score: <span id="current-round-score">0</span>
-                </div>
+    <!-- PAGE 2: GUIDE (SEO Content) -->
+    <main id="page-guide" class="site-page">
+        <div class="info-container">
+            <h2>The Ultimate Guide to Taboosey</h2>
+            
+            <h3>What is Taboosey?</h3>
+            <p>Taboosey is the premier online party word game designed to test your creativity and communication skills under pressure. Whether you are hosting a game night with friends, running a team-building exercise on Zoom, or just hanging out in the living room, Taboosey provides endless entertainment. The concept is simple but highly addictive: describe the target word to your teammates without uttering any of the forbidden 'taboo' words listed on the card.</p>
+            
+            <h3>How to Play</h3>
+            <p>Divide your group into two teams. When a team's round begins, one player is designated as the "clue-giver." This player looks at the screen, which displays a large <strong>Target Word</strong> at the top, followed by a list of 5 <strong>Taboo words</strong> below it.</p>
+            <ul>
+                <li><strong>Correct Guesses (+1 Point):</strong> If the team successfully guesses the word, tap the green "Correct" button to earn a point.</li>
+                <li><strong>Taboo Violation (-1 Point):</strong> If the clue-giver accidentally says a forbidden word, tap the red "Taboo" button. You lose a point.</li>
+                <li><strong>Skipping (0 Points):</strong> If a word is too difficult, you can pass by tapping the gray "Skip" button.</li>
+            </ul>
+
+            <h3>Winning Strategies</h3>
+            <p><strong>Use Synonyms:</strong> The best clue-givers immediately think of alternative definitions. If the target word is "Bark," don't just think of a dog—describe the outside of a tree!</p>
+            <p><strong>Fill in the Blank:</strong> Use common phrases or pop culture references where the target word is the missing piece (e.g., "The famous spy is named James ____").</p>
+
+            <h3>The Custom (AI) Category</h3>
+            <p>Our cutting-edge <strong>Custom (AI) Category</strong> feature allows you to input absolutely any topic—from "1990s Movies" to "Chemistry Terms"—and instantly generates a custom playable deck using artificial intelligence. It's the party game that never gets old!</p>
+        </div>
+    </main>
+
+    <!-- PAGE 3: ABOUT & OPTIONS -->
+    <main id="page-about" class="site-page">
+        <div class="info-container" style="text-align: center;">
+            <h2>About Taboosey</h2>
+            <p>Taboosey was built to be the fastest, easiest way to play word-guessing games with friends, without needing physical cards.</p>
+            
+            <div style="margin: 40px 0;">
+                <a href="mailto:feedback@taboosey.com?subject=Taboosey%20Feedback" class="btn-success" style="text-decoration: none; display: inline-block; padding: 12px 25px;"><i class="fas fa-envelope"></i> Contact Support</a>
             </div>
             
-            <div class="card taboo-card" id="active-card">
-                <div id="loading-overlay" style="display: none;">
-                    <i class="fas fa-spinner fa-spin"></i> Generating...<br>
-                    <span style="font-size: 1rem; color: #7f8c8d; font-weight: normal;">(timer paused)</span>
-                </div>
-
-                <div id="card-content">
-                    <h2 id="target-word">WORD</h2>
-                    <hr>
-                    <ul id="taboo-words">
-                        <li>Taboo 1</li>
-                        <li>Taboo 2</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="controls">
-                <button id="taboo-btn" class="btn-danger">Taboo (-1)</button>
-                <button id="skip-btn" class="btn-secondary">Skip (0)</button>
-                <button id="correct-btn" class="btn-success">Correct (+1)</button>
-            </div>
-            
-            <div class="utility-controls">
-                <button id="pause-btn" class="btn-warning">Pause</button>
-                <button id="end-round-btn" class="btn-danger">End Round</button>
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <h3>Legal Policies</h3>
+                <p>
+                    <a href="privacy.html" style="color: #3498db; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | 
+                    <a href="terms.html" style="color: #3498db; text-decoration: none; margin: 0 10px;">Terms of Service</a>
+                </p>
             </div>
         </div>
-
-        <div id="rules-modal" class="modal">
-            <div class="modal-content">
-                <span class="close-btn" id="close-rules-btn">&times;</span>
-                <h2><i class="fas fa-book-open"></i> How to Play</h2>
-                <ul class="aesthetic-list">
-                    <li>Divide into two teams.</li>
-                    <li>One player acts as the clue-giver. They must describe the <strong>Target Word</strong> to their team without using any of the <strong>Taboo words</strong> below it.</li>
-                    <li><span class="score-badge success">+1 point</span> for correct guesses.</li>
-                    <li><span class="score-badge danger">-1 point</span> if you accidentally say a Taboo word.</li>
-                    <li><span class="score-badge secondary">0 points</span> to skip a hard word.</li>
-                    <li>When time runs out, pass the device to the other team!</li>
-                </ul>
-            </div>
-        </div>
-
-        <div id="round-details-modal" class="modal">
-            <div class="modal-content" style="max-width: 450px;">
-                <span class="close-btn" id="close-details-btn">&times;</span>
-                <h2 id="details-round-title"><i class="fas fa-list-alt"></i> Round Details</h2>
-                
-                <div class="details-teams-container">
-                    <div class="details-team">
-                        <h3 class="t1-label">Team 1</h3>
-                        <ul id="t1-details-list" class="details-list"></ul>
-                    </div>
-                    <div class="details-team">
-                        <h3 class="t2-label">Team 2</h3>
-                        <ul id="t2-details-list" class="details-list"></ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="custom-alert-modal" class="modal">
-            <div class="modal-content" style="max-width: 320px; text-align: center;">
-                <h2 id="custom-alert-title" style="border: none; padding-bottom: 0; margin-bottom: 10px;">Notice</h2>
-                <p id="custom-alert-message" style="margin: 10px 0 20px 0; color: #444; font-size: 1.05rem; line-height: 1.4;"></p>
-                <div class="action-row">
-                    <button id="custom-alert-cancel" class="btn-secondary">Cancel</button>
-                    <button id="custom-alert-confirm" class="btn-danger">Confirm</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    </main>
 
     <script src="words.js"></script>
     <script src="script.js"></script>

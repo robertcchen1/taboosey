@@ -49,33 +49,47 @@ function playSound(type) {
     osc.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
+    // Fade in to prevent clicking sounds at the start of the tone
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.02);
+
     if (type === 'correct') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        // Softer, pleasant chime (Triangle wave, C5 to E5)
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); 
+        
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
+        
     } else if (type === 'taboo') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        // Soft low boop instead of a harsh sawtooth buzz
+        osc.type = 'triangle'; 
+        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
+        
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.4);
+        
     } else if (type === 'skip') {
+        // Gentle soft blip
         osc.type = 'sine';
         osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.2);
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.15);
+        
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.2);
+        osc.stop(audioCtx.currentTime + 0.15);
+        
     } else if (type === 'tick') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        // Unobtrusive tick
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.01);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.05);
@@ -141,7 +155,6 @@ function showCustomModal(title, message, isConfirm, onConfirmCallback) {
     ui.customAlertTitle.innerHTML = title;
     ui.customAlertMsg.innerText = message;
     
-    // Clone nodes to easily strip previous event listeners
     const newConfirm = ui.customAlertConfirm.cloneNode(true);
     ui.customAlertConfirm.parentNode.replaceChild(newConfirm, ui.customAlertConfirm);
     ui.customAlertConfirm = newConfirm;
@@ -217,6 +230,20 @@ function toggleMute(forceState = null) {
     ui.muteBtn.innerHTML = isMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
 }
 
+// --- Outer Webpage Navigation Logic ---
+const navTabs = document.querySelectorAll('.nav-tab');
+const sitePages = document.querySelectorAll('.site-page');
+
+navTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        navTabs.forEach(t => t.classList.remove('active'));
+        sitePages.forEach(p => p.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById(tab.getAttribute('data-target')).classList.add('active');
+    });
+});
+
 // --- Event Listeners ---
 ui.catInputSetup.addEventListener('change', (e) => syncCategories(e.target));
 ui.catInputTurn.addEventListener('change', (e) => syncCategories(e.target));
@@ -244,16 +271,18 @@ window.addEventListener('click', (e) => {
     if (e.target === ui.customAlertModal) ui.customAlertModal.classList.remove('active');
 });
 
-ui.clearMemoryLink.addEventListener('click', () => {
-    showCustomModal('<i class="fas fa-trash-alt"></i> Reset Deck?', "Are you sure you want to reset the deck? Previously played words will appear again.", true, () => {
-        localStorage.removeItem(CONFIG.STORAGE_KEYS.SEEN_WORDS);
-        localStorage.removeItem(CONFIG.STORAGE_KEYS.AI_HISTORY);
-        seenWords = [];
-        aiGeneratedHistory = [];
-        resetDeck();
-        showCustomModal('<i class="fas fa-check-circle"></i> Success', "Deck memory has been successfully wiped!", false);
+if (ui.clearMemoryLink) {
+    ui.clearMemoryLink.addEventListener('click', () => {
+        showCustomModal('<i class="fas fa-trash-alt"></i> Reset Deck?', "Are you sure you want to reset the deck? Previously played words will appear again.", true, () => {
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.SEEN_WORDS);
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.AI_HISTORY);
+            seenWords = [];
+            aiGeneratedHistory = [];
+            resetDeck();
+            showCustomModal('<i class="fas fa-check-circle"></i> Success', "Deck memory has been successfully wiped!", false);
+        });
     });
-});
+}
 
 document.getElementById('start-game-btn').addEventListener('click', initializeGame);
 document.getElementById('start-turn-btn').addEventListener('click', startTurn);
@@ -270,7 +299,7 @@ function showScreen(screenName) {
     screens[screenName].classList.add('active');
     
     // Only display the home button on the "Between Turns" screen
-    ui.homeBtn.style.display = screenName === 'turn' ? 'inline-block' : 'none';
+    ui.homeBtn.style.display = screenName === 'turn' ? 'flex' : 'none';
 }
 
 function getFilteredDeck() {
@@ -372,7 +401,6 @@ function startTurn() {
     }, 1000);
 }
 
-// --- Deck Distribution Logic ---
 function getNextDeckCard() {
     if (unseenWords.length === 0) {
         let baseDeck = getFilteredDeck();
@@ -612,3 +640,26 @@ window.openRoundDetails = function(index) {
     document.getElementById('t2-details-list').innerHTML = renderWords(log.t2Words);
     ui.detailsModal.classList.add('active');
 };
+
+// --- Native Android App Controls ---
+if (window.Capacitor) {
+    const { App } = Capacitor.Plugins;
+
+    App.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) {
+            if (!isPaused && screens.game.classList.contains('active')) {
+                togglePause();
+            }
+        }
+    });
+
+    App.addListener('backButton', () => {
+        if (screens.setup.classList.contains('active')) {
+            App.exitApp();
+        } else if (screens.game.classList.contains('active')) {
+            ui.homeBtn.click(); 
+        } else {
+            showScreen('setup');
+        }
+    });
+}
