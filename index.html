@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Taboosey: Online Taboo Word Game</title>
     
-    <!-- Standard Favicons -->
     <link rel="icon" type="image/png" href="icon.png?v=2">
     <link rel="apple-touch-icon" href="icon.png?v=2">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a1a">
 
-    <!-- SEO & Social Sharing Tags -->
     <meta name="description" content="Describe the word without saying the Taboo words! Play instantly on your phone.">
     
     <meta property="og:type" content="website">
@@ -27,7 +25,6 @@
     <meta name="twitter:description" content="Describe the word without saying the Taboo words!">
     <meta name="twitter:image" content="https://taboosey.com/social-preview-image.png">
 
-    <!-- Google AdSense -->
     <meta name="google-adsense-account" content="ca-pub-7570484814519250">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7570484814519250" crossorigin="anonymous"></script>
 
@@ -69,8 +66,8 @@
                     </div>
                     
                     <div class="brief-rules">
-                        <p style="margin-top: 0; margin-bottom: 10px;">Describe the <strong>Target Word</strong> to your team without saying any of the <strong>Taboo words</strong>!</p>
-                        <p style="margin: 0; margin-bottom: 10px;">Score <span class="score-badge success">+1</span> for correct guesses, and <span class="score-badge danger">-1</span> if you accidentally say a Taboo word.</p>
+                        <p style="margin-top: 0; margin-bottom: 8px;">Describe the <strong>Target Word</strong> without saying the <strong>Taboo words</strong>!</p>
+                        <p style="margin: 0;">Score <span class="score-badge success">+1</span> for correct, <span class="score-badge danger">-1</span> for Taboo.</p>
                     </div>
                     
                     <div class="settings-container">
@@ -96,9 +93,9 @@
                             </select>
                         </div>
                         
-                        <div class="input-group" id="custom-cat-group-setup" style="display: none; align-items: flex-start;">
-                            <label class="stylish-label" for="custom-cat-input-setup" style="margin-top: 10px;">Topic:</label>
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; width: 100%;">
+                        <div class="input-group" id="custom-cat-group-setup" style="display: none; align-items: flex-start; flex-direction: column;">
+                            <label class="stylish-label" for="custom-cat-input-setup" style="margin-bottom: 5px;">Custom Topic:</label>
+                            <div style="width: 100%;">
                                 <input type="text" id="custom-cat-input-setup" class="stylish-input" placeholder="Type anything..." style="width: 100%; box-sizing: border-box;">
                                 <span id="error-msg-setup" class="error-text">Please enter a topic!</span>
                             </div>
@@ -149,7 +146,7 @@
                     </div>
 
                     <!-- MANUAL AD SLOT -->
-                    <div class="ad-container-manual" style="margin: 15px 0; min-height: 90px; overflow: hidden;">
+                    <div class="ad-container-manual">
                         <ins class="adsbygoogle"
                              style="display:block"
                              data-ad-client="ca-pub-7570484814519250"
@@ -178,10 +175,10 @@
                                 </select>
                             </div>
                             
-                            <div class="setting-item" id="custom-cat-group-turn" style="display: none; width: 100%; justify-content: center; flex-direction: column; margin-top: 5px;">
-                                <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                            <div class="setting-item" id="custom-cat-group-turn" style="display: none; width: 100%; flex-direction: column; margin-top: 5px;">
+                                <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
                                     <label class="stylish-label" for="custom-cat-input-turn">Topic:</label>
-                                    <input type="text" id="custom-cat-input-turn" class="stylish-input" placeholder="Type anything..." style="width: 140px;">
+                                    <input type="text" id="custom-cat-input-turn" class="stylish-input" placeholder="Type..." style="flex: 1;">
                                 </div>
                                 <span id="error-msg-turn" class="error-text">Please enter a topic!</span>
                             </div>
@@ -208,7 +205,7 @@
                     <div class="card taboo-card" id="active-card">
                         <div id="loading-overlay" style="display: none;">
                             <i class="fas fa-spinner fa-spin"></i> Generating...<br>
-                            <span style="font-size: 1rem; color: #7f8c8d; font-weight: normal;">(timer paused)</span>
+                            <span style="font-size: 0.9rem; color: #7f8c8d; font-weight: normal;">(timer paused)</span>
                         </div>
 
                         <div id="card-content">
@@ -252,7 +249,7 @@
                 <div id="round-details-modal" class="modal">
                     <div class="modal-content" style="max-width: 450px;">
                         <span class="close-btn" id="close-details-btn">&times;</span>
-                        <h2 id="details-round-title"><i class="fas fa-list-alt"></i> Round Details</h2>
+                        <h2 id="details-round-title"><i class="fas fa-list-alt"></i> Details</h2>
                         <div class="details-teams-container">
                             <div class="details-team">
                                 <h3 class="t1-label">Team 1</h3>
@@ -269,7 +266,7 @@
                 <div id="custom-alert-modal" class="modal">
                     <div class="modal-content" style="max-width: 320px; text-align: center;">
                         <h2 id="custom-alert-title" style="border: none; padding-bottom: 0; margin-bottom: 10px;">Notice</h2>
-                        <p id="custom-alert-message" style="margin: 10px 0 20px 0; color: #444; font-size: 1.05rem; line-height: 1.4;"></p>
+                        <p id="custom-alert-message" style="margin: 10px 0 20px 0; color: #444; font-size: 1rem; line-height: 1.4;"></p>
                         <div class="action-row">
                             <button id="custom-alert-cancel" class="btn-secondary">Cancel</button>
                             <button id="custom-alert-confirm" class="btn-danger">Confirm</button>
@@ -306,10 +303,10 @@
         <div class="info-container" style="text-align: center;">
             <h2>About Taboosey</h2>
             <p>Taboosey was built to be the fastest, easiest way to play word-guessing games with friends, without needing physical cards.</p>
-            <div style="margin: 40px 0;">
+            <div style="margin: 30px 0;">
                 <a href="mailto:feedback@taboosey.com?subject=Taboosey%20Feedback" class="btn-success" style="text-decoration: none; display: inline-block; padding: 12px 25px;"><i class="fas fa-envelope"></i> Contact Support</a>
             </div>
-            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
                 <h3>Legal Policies</h3>
                 <p>
                     <a href="privacy.html" style="color: #3498db; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | 
