@@ -502,11 +502,11 @@ async function fetchAIBatch(count = 5) {
     
     const proxyUrl = "https://taboosey-proxy.robertchenmit.workers.dev"; 
     
-    // Inject model preference per user instruction explicitly
+    // REVERTED: Removed the specific model specification per user instruction
     const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: "gemma-3", contents: [{ parts: [{ text: prompt }] }] })
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
 
     if (!response.ok) throw new Error(`Proxy/API Error ${response.status}: ${await response.text()}`);
