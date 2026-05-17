@@ -41,7 +41,18 @@ if (localStorage.getItem('tabooseyAIHistory')) {
 let useAI = false;
 let isFetching = false;
 let isBackgroundFetching = false;
-let aiBuffer = []; 
+let aiBuffer = [];
+let preFetchDebounce = null;
+let fetchEpoch = 0;
+
+function stemWord(w) {
+    w = w.toLowerCase().trim();
+    if (w.length < 4) return w;
+    if (w.endsWith('ies') && w.length > 4) return w.slice(0, -3) + 'y';
+    if (w.endsWith('es') && w.length > 4) return w.slice(0, -2);
+    if (w.endsWith('s') && w.length > 3 && !w.endsWith('ss')) return w.slice(0, -1);
+    return w;
+}
 
 // --- Sound Engine (Web Audio API) ---
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -212,6 +223,12 @@ function syncCategories(source) {
 
 function syncCustomText(source) {
     const text = source.value;
+    if (text.trim().toLowerCase() !== customCategoryText.trim().toLowerCase()) {
+        fetchEpoch++;
+        aiBuffer = [];
+        isBackgroundFetching = false;
+    }
+
     ui.customCatInputSetup.value = text;
     ui.customCatInputTurn.value = text;
     customCategoryText = text;
@@ -221,6 +238,9 @@ function syncCustomText(source) {
         ui.errorMsgTurn.style.display = 'none';
         ui.customCatInputSetup.classList.remove('input-error');
         ui.customCatInputTurn.classList.remove('input-error');
+
+        clearTimeout(preFetchDebounce);
+        preFetchDebounce = setTimeout(triggerAIPreFetch, 2000);
     }
 }
 
@@ -340,6 +360,8 @@ function initializeGame() {
     
     resetScores();
     showScreen('turn');
+
+    triggerAIPreFetch();
 }
 
 function resetScores() {
@@ -406,20 +428,52 @@ function getNextDeckCard() {
     return unseenWords.splice(randomIndex, 1)[0]; 
 }
 
+function triggerAIPreFetch() {
+    if (!useAI || isBackgroundFetching) return;
+    const epoch = fetchEpoch;
+    fillBufferFromLocal();
+    if (aiBuffer.length < 10) {
+        isBackgroundFetching = true;
+        fetchAIBatch(10)
+            .then(cards => {
+                if (fetchEpoch !== epoch) return;
+                if (cards?.length) aiBuffer.push(...cards);
+                isBackgroundFetching = false;
+                triggerBulkFetch(epoch);
+            })
+            .catch(e => {
+                if (fetchEpoch === epoch) isBackgroundFetching = false;
+                console.error("Pre-fetch failed:", e);
+            });
+    }
+}
+
+function triggerBulkFetch(epoch) {
+    if (!useAI || isBackgroundFetching || fetchEpoch !== epoch) return;
+    isBackgroundFetching = true;
+    fetchAIBatch(50)
+        .then(cards => {
+            if (fetchEpoch !== epoch) return;
+            if (cards?.length) aiBuffer.push(...cards);
+        })
+        .catch(e => console.error("Bulk fetch failed:", e))
+        .finally(() => { if (fetchEpoch === epoch) isBackgroundFetching = false; });
+}
+
 function fillBufferFromLocal() {
     if (!useAI) return;
     const currentTopic = customCategoryText.trim().toLowerCase();
     
-    const availableLocalCards = aiDeck.filter(c => 
-        c.topic === currentTopic && 
-        !seenWords.some(sw => sw.word === c.word) &&
-        !aiBuffer.some(buf => buf.word === c.word) &&
-        (!currentCard || currentCard.word !== c.word)
+    const availableLocalCards = aiDeck.filter(c =>
+        c.topic === currentTopic &&
+        !seenWords.some(sw => stemWord(sw.word) === stemWord(c.word)) &&
+        !aiBuffer.some(buf => stemWord(buf.word) === stemWord(c.word)) &&
+        (!currentCard || stemWord(currentCard.word) !== stemWord(c.word))
     );
     
     availableLocalCards.sort(() => Math.random() - 0.5);
     
-    while(aiBuffer.length < 5 && availableLocalCards.length > 0) {
+    while(aiBuffer.length < 10 && availableLocalCards.length > 0) {
         aiBuffer.push(availableLocalCards.pop());
     }
 }
@@ -439,7 +493,7 @@ async function loadNextCard() {
             } else {
                 try {
                     isBackgroundFetching = true;
-                    const newCards = await fetchAIBatch(5);
+                    const newCards = await fetchAIBatch(10);
                     if (newCards && newCards.length > 0 && roundCounter === requestedRound) {
                         aiBuffer.push(...newCards);
                     }
@@ -481,18 +535,17 @@ async function loadNextCard() {
 
 async function maintainAIBuffer() {
     if (isBackgroundFetching || !useAI || isPaused) return;
-    
+    const epoch = fetchEpoch;
     fillBufferFromLocal();
-    
-    if (aiBuffer.length < 3) {
+    if (aiBuffer.length < 5) {
         isBackgroundFetching = true;
-        const requestedRound = roundCounter;
         try {
-            const newCards = await fetchAIBatch(5);
-            if (newCards && newCards.length > 0 && roundCounter === requestedRound && useAI) {
+            const newCards = await fetchAIBatch(10);
+            if (fetchEpoch === epoch && newCards?.length && useAI) {
                 aiBuffer.push(...newCards);
             }
-        } catch (e) { console.error("Background buffer failed", e); } finally { isBackgroundFetching = false; }
+        } catch (e) { console.error("Background buffer failed", e); }
+        finally { if (fetchEpoch === epoch) isBackgroundFetching = false; }
     }
 }
 
@@ -507,11 +560,11 @@ async function fetchAIBatch(count = 5) {
         avoidWords.push(currentCard.word);
     }
 
-    avoidWords = [...new Set(avoidWords)].filter(Boolean);
-    
+    avoidWords = [...new Set(avoidWords.map(w => w.toLowerCase()))].filter(Boolean);
+
     let avoidPrompt = "";
     if (avoidWords.length > 0) {
-        const recentAvoids = avoidWords.slice(-200); 
+        const recentAvoids = avoidWords.slice(-50);
         avoidPrompt = `\nCRITICAL: DO NOT use any of these words as the Target: ${recentAvoids.join(', ')}.`;
     }
 
@@ -526,19 +579,37 @@ async function fetchAIBatch(count = 5) {
     const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        body: JSON.stringify({ prompt })
     });
 
     if (!response.ok) throw new Error(`Proxy/API Error ${response.status}: ${await response.text()}`);
 
     const data = await response.json();
-    let jsonText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    const cardDataArray = JSON.parse(jsonText);
+    let jsonText = data.text.replace(/```json/g, '').replace(/```/g, '').trim();
+    jsonText = jsonText.replace(/,\s*([}\]])/g, '$1');
+    const arrayStart = jsonText.indexOf('[');
+    const arrayEnd = jsonText.lastIndexOf(']');
+    if (arrayStart === -1 || arrayEnd === -1) throw new Error("No JSON array found in response");
+    jsonText = jsonText.slice(arrayStart, arrayEnd + 1);
+
+    let cardDataArray;
+    try {
+        cardDataArray = JSON.parse(jsonText);
+    } catch {
+        // Malformed JSON mid-response: extract whatever complete card objects exist
+        cardDataArray = [];
+        const cardRegex = /\{"word"\s*:\s*"([^"]+)"\s*,\s*"taboo"\s*:\s*\[([^\]]+)\]\s*\}/g;
+        let m;
+        while ((m = cardRegex.exec(jsonText)) !== null) {
+            try { cardDataArray.push(JSON.parse(m[0])); } catch {}
+        }
+    }
+    const avoidStems = new Set(avoidWords.map(stemWord));
     const validCards = [];
 
     for (let card of cardDataArray) {
-        if (!avoidWords.includes(card.word) && !validCards.some(v => v.word === card.word)) {
+        const wordStem = stemWord(card.word);
+        if (!avoidStems.has(wordStem) && !validCards.some(v => stemWord(v.word) === wordStem)) {
             card.category = "Custom";
             card.topic = requestedTopic; 
             
@@ -632,9 +703,11 @@ function endTurn() {
     roundCounter++;
     
     aiBuffer = [];
-    
+    isBackgroundFetching = false;
+
     updateTurnScreenUI();
     showScreen('turn');
+    triggerAIPreFetch();
 }
 
 function updateTurnScreenUI() {
