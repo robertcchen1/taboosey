@@ -22,6 +22,10 @@ let isPaused = false;
 let isMuted = false;
 let lastAdRefreshTime = 0;
 
+// Tracking actual state to fix category sync bug
+let activeDeckCategory = "All";
+let activeCustomText = "";
+
 // --- Deck Tracking Variables (Loaded from LocalStorage) ---
 let seenWords = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.SEEN_WORDS)) || []; 
 let aiDeck = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.AI_DECK)) || []; 
@@ -51,17 +55,15 @@ function playSound(type) {
 
     const t = audioCtx.currentTime;
 
-    // Helper function to create true overlapping chimes
     const playChime = (freq, startTime, duration) => {
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         osc.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         
-        osc.type = 'sine'; // Pure tone for a bell/chime feel
+        osc.type = 'sine'; 
         osc.frequency.setValueAtTime(freq, startTime);
         
-        // Percussive bell envelope: fast attack, long smooth fade out
         gainNode.gain.setValueAtTime(0, startTime);
         gainNode.gain.linearRampToValueAtTime(0.25, startTime + 0.02); 
         gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration); 
@@ -71,21 +73,14 @@ function playSound(type) {
     };
 
     if (type === 'correct') {
-        // Lowered pitch: Happy ascending chime (C5 -> E5)
         playChime(523.25, t, 0.5); 
         playChime(659.25, t + 0.1, 0.7); 
-        
     } else if (type === 'taboo') {
-        // Kept taboo at the same soft octave for balance (Eb5 -> C5)
         playChime(622.25, t, 0.5);
         playChime(523.25, t + 0.15, 0.7);
-        
     } else if (type === 'skip') {
-        // Single neutral chime (G5)
         playChime(783.99, t, 0.4);
-        
     } else if (type === 'tick') {
-        // Soft UI tick
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         osc.connect(gainNode);
@@ -325,6 +320,8 @@ function validateInputs(categoryInput, customInput, errorMsg) {
 }
 
 function resetDeck() {
+    activeDeckCategory = currentCategory;
+    activeCustomText = customCategoryText;
     let baseDeck = getFilteredDeck();
     unseenWords = baseDeck.filter(baseCard => !seenWords.some(seenCard => seenCard.word === baseCard.word));
     currentCard = null;
@@ -359,13 +356,11 @@ function startTurn() {
 
     timeLimit = parseInt(ui.timeInputTurn.value) || 60;
 
-    let oldCategory = currentCategory;
-    let oldCustomText = customCategoryText;
-    
     syncCategories(ui.catInputTurn);
     syncCustomText(ui.customCatInputTurn);
     
-    if (currentCategory !== oldCategory || customCategoryText !== oldCustomText) {
+    // FIX: Compare against actual built deck state rather than what was loosely stored before the listener ran
+    if (currentCategory !== activeDeckCategory || customCategoryText !== activeCustomText) {
         resetDeck();
     }
 
@@ -418,7 +413,8 @@ function fillBufferFromLocal() {
     const availableLocalCards = aiDeck.filter(c => 
         c.topic === currentTopic && 
         !seenWords.some(sw => sw.word === c.word) &&
-        !aiBuffer.some(buf => buf.word === c.word)
+        !aiBuffer.some(buf => buf.word === c.word) &&
+        (!currentCard || currentCard.word !== c.word)
     );
     
     availableLocalCards.sort(() => Math.random() - 0.5);
@@ -430,6 +426,7 @@ function fillBufferFromLocal() {
 
 async function loadNextCard() {
     if (useAI) {
+        const requestedRound = roundCounter;
         fillBufferFromLocal();
 
         if (aiBuffer.length === 0) {
@@ -443,16 +440,26 @@ async function loadNextCard() {
                 try {
                     isBackgroundFetching = true;
                     const newCards = await fetchAIBatch(5);
-                    if (newCards && newCards.length > 0) aiBuffer.push(...newCards);
+                    if (newCards && newCards.length > 0 && roundCounter === requestedRound) {
+                        aiBuffer.push(...newCards);
+                    }
                 } catch (e) { console.error("Batch load failed:", e); } finally { isBackgroundFetching = false; }
             }
             
-            if (aiBuffer.length === 0) {
+            if (aiBuffer.length === 0 && roundCounter === requestedRound) {
                 try {
                     isBackgroundFetching = true;
                     const emergencyCards = await fetchAIBatch(10);
-                    if (emergencyCards && emergencyCards.length > 0) aiBuffer.push(...emergencyCards);
+                    if (emergencyCards && emergencyCards.length > 0 && roundCounter === requestedRound) {
+                        aiBuffer.push(...emergencyCards);
+                    }
                 } catch (e) { console.error("Emergency load failed:", e); } finally { isBackgroundFetching = false; }
+            }
+            
+            if (roundCounter !== requestedRound || !useAI || !screens.game.classList.contains('active')) {
+                setLoadingState(false);
+                isFetching = false;
+                return; 
             }
             
             setLoadingState(false);
@@ -479,30 +486,43 @@ async function maintainAIBuffer() {
     
     if (aiBuffer.length < 3) {
         isBackgroundFetching = true;
+        const requestedRound = roundCounter;
         try {
             const newCards = await fetchAIBatch(5);
-            if (newCards && newCards.length > 0) aiBuffer.push(...newCards);
+            if (newCards && newCards.length > 0 && roundCounter === requestedRound && useAI) {
+                aiBuffer.push(...newCards);
+            }
         } catch (e) { console.error("Background buffer failed", e); } finally { isBackgroundFetching = false; }
     }
 }
 
 async function fetchAIBatch(count = 5) {
-    let avoidWords = [...seenWords.map(c => c.word), ...aiDeck.map(c => c.word), ...aiBuffer.map(c => c.word)];
+    let avoidWords = [
+        ...seenWords.map(c => c.word), 
+        ...aiDeck.map(c => c.word), 
+        ...aiBuffer.map(c => c.word)
+    ];
+    
+    if (currentCard) {
+        avoidWords.push(currentCard.word);
+    }
+
     avoidWords = [...new Set(avoidWords)].filter(Boolean);
     
     let avoidPrompt = "";
     if (avoidWords.length > 0) {
-        const recentAvoids = avoidWords.slice(-100); 
+        const recentAvoids = avoidWords.slice(-200); 
         avoidPrompt = `\nCRITICAL: DO NOT use any of these words as the Target: ${recentAvoids.join(', ')}.`;
     }
 
-    const currentTopic = customCategoryText.trim().toLowerCase();
-    let subject = currentCategory === "Custom" ? `the topic: "${customCategoryText || 'interesting random facts'}"` : `the category: "${currentCategory}"`;
+    const requestedTopic = customCategoryText.trim().toLowerCase();
+    const requestedCategory = currentCategory;
+    
+    let subject = requestedCategory === "Custom" ? `the topic: "${requestedTopic || 'interesting random facts'}"` : `the category: "${requestedCategory}"`;
     const prompt = `You are a Taboo game card generator. Generate exactly ${count} UNIQUE target words and 5 taboo words for each, related to ${subject}. The taboo words are the most common words people use to describe the target word.${avoidPrompt} Output ONLY valid JSON in this exact format, with no markdown styling, returning an array of exactly ${count} objects: [{"word": "Target1", "taboo": ["Word1", "Word2", "Word3", "Word4", "Word5"]}, {"word": "Target2", "taboo": ["Word1", "Word2", "Word3", "Word4", "Word5"]}]`;
     
     const proxyUrl = "https://taboosey-proxy.robertchenmit.workers.dev"; 
     
-    // REVERTED: Removed the specific model specification per user instruction
     const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -520,7 +540,7 @@ async function fetchAIBatch(count = 5) {
     for (let card of cardDataArray) {
         if (!avoidWords.includes(card.word) && !validCards.some(v => v.word === card.word)) {
             card.category = "Custom";
-            card.topic = currentTopic;
+            card.topic = requestedTopic; 
             
             validCards.push(card);
             aiDeck.push(card); 
@@ -584,6 +604,9 @@ function togglePause() {
 
 function endTurn() {
     clearInterval(timerInterval);
+    
+    isFetching = false; 
+    setLoadingState(false);
     
     if (currentCard) {
         seenWords.push(currentCard);
