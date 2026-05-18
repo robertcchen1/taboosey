@@ -439,25 +439,12 @@ function triggerAIPreFetch() {
                 if (fetchEpoch !== epoch) return;
                 if (cards?.length) aiBuffer.push(...cards);
                 isBackgroundFetching = false;
-                triggerBulkFetch(epoch);
             })
             .catch(e => {
                 if (fetchEpoch === epoch) isBackgroundFetching = false;
                 console.error("Pre-fetch failed:", e);
             });
     }
-}
-
-function triggerBulkFetch(epoch) {
-    if (!useAI || isBackgroundFetching || fetchEpoch !== epoch) return;
-    isBackgroundFetching = true;
-    fetchAIBatch(50)
-        .then(cards => {
-            if (fetchEpoch !== epoch) return;
-            if (cards?.length) aiBuffer.push(...cards);
-        })
-        .catch(e => console.error("Bulk fetch failed:", e))
-        .finally(() => { if (fetchEpoch === epoch) isBackgroundFetching = false; });
 }
 
 function fillBufferFromLocal() {
