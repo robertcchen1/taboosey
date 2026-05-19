@@ -796,6 +796,7 @@ if ('serviceWorker' in navigator && !window.Capacitor) {
     const isAndroid = /Android/.test(navigator.userAgent);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const bannerDismissed = localStorage.getItem('tabooseyAndroidInstallDismissed') === '1';
+    let isInstalled = isStandalone || localStorage.getItem('tabooseyInstalled') === '1';
 
     let deferredPrompt = null;
 
@@ -807,8 +808,8 @@ if ('serviceWorker' in navigator && !window.Capacitor) {
 
     function setAboutHint() {
         if (!aboutHint) return;
-        if (isStandalone) {
-            aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is already installed on this device.';
+        if (isInstalled) {
+            aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is installed on this device.';
             if (aboutBtn) aboutBtn.style.display = 'none';
             return;
         }
@@ -824,22 +825,32 @@ if ('serviceWorker' in navigator && !window.Capacitor) {
     }
     setAboutHint();
 
+    function markInstalled() {
+        isInstalled = true;
+        localStorage.setItem('tabooseyInstalled', '1');
+        if (banner) banner.style.display = 'none';
+        if (aboutBtn) aboutBtn.style.display = 'none';
+        if (aboutHint) aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is installed on this device.';
+    }
+
     async function triggerInstall() {
         if (!deferredPrompt) return;
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         deferredPrompt = null;
-        if (outcome === 'accepted') {
-            if (banner) banner.style.display = 'none';
-            if (aboutBtn) aboutBtn.style.display = 'none';
-        }
+        if (outcome === 'accepted') markInstalled();
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        if (aboutBtn && !isStandalone) aboutBtn.style.display = 'inline-block';
-        if (banner && !bannerDismissed && !isStandalone) banner.style.display = 'flex';
+        if (isInstalled) {
+            isInstalled = false;
+            localStorage.removeItem('tabooseyInstalled');
+            setAboutHint();
+        }
+        if (aboutBtn) aboutBtn.style.display = 'inline-block';
+        if (banner && !bannerDismissed) banner.style.display = 'flex';
     });
 
     if (bannerInstallBtn) bannerInstallBtn.addEventListener('click', triggerInstall);
@@ -852,11 +863,7 @@ if ('serviceWorker' in navigator && !window.Capacitor) {
         });
     }
 
-    window.addEventListener('appinstalled', () => {
-        if (banner) banner.style.display = 'none';
-        if (aboutBtn) aboutBtn.style.display = 'none';
-        if (aboutHint) aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is now installed.';
-    });
+    window.addEventListener('appinstalled', markInstalled);
 })();
 
 (function showIosInstallHint() {
