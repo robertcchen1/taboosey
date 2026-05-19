@@ -9,6 +9,9 @@
     <link rel="apple-touch-icon" href="icon.png?v=2">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Taboosey">
 
     <meta name="description" content="Describe the word without saying the Taboo words! Play instantly on your phone.">
     
@@ -32,6 +35,25 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+    <div id="ios-install-banner" class="ios-install-banner" style="display: none;">
+        <img src="icon.png" alt="Taboosey icon" class="ios-install-icon">
+        <div class="ios-install-text">
+            <strong>Install Taboosey</strong>
+            <span>Tap <i class="fas fa-arrow-up-from-bracket"></i> then <strong>Add to Home Screen</strong></span>
+        </div>
+        <button id="ios-install-dismiss" class="ios-install-dismiss" aria-label="Dismiss">&times;</button>
+    </div>
+
+    <div id="android-install-banner" class="ios-install-banner" style="display: none;">
+        <img src="icon.png" alt="Taboosey icon" class="ios-install-icon">
+        <div class="ios-install-text">
+            <strong>Install Taboosey</strong>
+            <span>Add it to your home screen for the full app experience.</span>
+        </div>
+        <button id="android-install-btn" class="android-install-btn">Install</button>
+        <button id="android-install-dismiss" class="ios-install-dismiss" aria-label="Dismiss">&times;</button>
+    </div>
 
     <!-- OUTER WEBPAGE NAVIGATION -->
     <nav class="top-nav">
@@ -301,6 +323,13 @@
             <p>Taboosey is a fast and easy way to play a Taboo word-guessing game with friends, without needing physical cards. With a massive built-in word deck and smart memory tracking, words are never repeated, ensuring every round stays fresh and unpredictable.</p>
             <div style="margin: 30px 0;">
                 <a href="mailto:feedback@taboosey.com?subject=Taboosey%20Feedback" class="btn-success" style="text-decoration: none; display: inline-block; padding: 12px 25px;"><i class="fas fa-envelope"></i> Contact Support</a>
+            </div>
+            <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
+                <h3>Install Taboosey as an App</h3>
+                <p id="about-install-hint">Add Taboosey to your home screen for fullscreen play.</p>
+                <button id="about-install-btn" class="btn-success" style="display: none; padding: 12px 25px; margin-top: 10px; border: none; cursor: pointer; font-size: 1rem;">
+                    <i class="fas fa-download"></i> Install App
+                </button>
             </div>
             <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
                 <h3>Legal Policies</h3>

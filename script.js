@@ -751,6 +751,15 @@ window.openRoundDetails = function(index) {
     ui.detailsModal.classList.add('active');
 };
 
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+        if (!isPaused && screens.game.classList.contains('active')) togglePause();
+    } else {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+});
+
 if (window.Capacitor) {
     const { App } = Capacitor.Plugins;
 
@@ -766,9 +775,103 @@ if (window.Capacitor) {
         if (screens.setup.classList.contains('active')) {
             App.exitApp();
         } else if (screens.game.classList.contains('active')) {
-            ui.homeBtn.click(); 
+            ui.homeBtn.click();
         } else {
             showScreen('setup');
         }
     });
 }
+
+if ('serviceWorker' in navigator && !window.Capacitor) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => console.error('SW registration failed:', err));
+    });
+}
+
+(function setupInstall() {
+    if (window.Capacitor) return;
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOSSafari = isIOS && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS|mercury/i.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const bannerDismissed = localStorage.getItem('tabooseyAndroidInstallDismissed') === '1';
+
+    let deferredPrompt = null;
+
+    const banner = document.getElementById('android-install-banner');
+    const bannerInstallBtn = document.getElementById('android-install-btn');
+    const bannerDismissBtn = document.getElementById('android-install-dismiss');
+    const aboutHint = document.getElementById('about-install-hint');
+    const aboutBtn = document.getElementById('about-install-btn');
+
+    function setAboutHint() {
+        if (!aboutHint) return;
+        if (isStandalone) {
+            aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is already installed on this device.';
+            if (aboutBtn) aboutBtn.style.display = 'none';
+            return;
+        }
+        if (isIOSSafari) {
+            aboutHint.innerHTML = 'On iPhone: tap the <i class="fas fa-arrow-up-from-bracket"></i> Share button, then <strong>Add to Home Screen</strong>.';
+        } else if (isIOS) {
+            aboutHint.innerHTML = 'Installing on iPhone only works from Safari. Open <strong>taboosey.com</strong> in Safari, then tap <i class="fas fa-arrow-up-from-bracket"></i> Share &rarr; <strong>Add to Home Screen</strong>.';
+        } else if (isAndroid) {
+            aboutHint.innerHTML = 'On Android: tap <strong>Install App</strong> below, or open Chrome menu (<i class="fas fa-ellipsis-vertical"></i>) and choose <strong>Install app</strong>.';
+        } else {
+            aboutHint.innerHTML = 'On desktop: click <strong>Install App</strong> below, or click the <i class="fas fa-download"></i> icon in your browser\'s address bar (Chrome/Edge).';
+        }
+    }
+    setAboutHint();
+
+    async function triggerInstall() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        if (outcome === 'accepted') {
+            if (banner) banner.style.display = 'none';
+            if (aboutBtn) aboutBtn.style.display = 'none';
+        }
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (aboutBtn && !isStandalone) aboutBtn.style.display = 'inline-block';
+        if (banner && !bannerDismissed && !isStandalone) banner.style.display = 'flex';
+    });
+
+    if (bannerInstallBtn) bannerInstallBtn.addEventListener('click', triggerInstall);
+    if (aboutBtn) aboutBtn.addEventListener('click', triggerInstall);
+
+    if (bannerDismissBtn) {
+        bannerDismissBtn.addEventListener('click', () => {
+            if (banner) banner.style.display = 'none';
+            localStorage.setItem('tabooseyAndroidInstallDismissed', '1');
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+        if (banner) banner.style.display = 'none';
+        if (aboutBtn) aboutBtn.style.display = 'none';
+        if (aboutHint) aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is now installed.';
+    });
+})();
+
+(function showIosInstallHint() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS|mercury/i.test(navigator.userAgent);
+    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    const dismissed = localStorage.getItem('tabooseyIosInstallDismissed') === '1';
+    if (!isIOS || !isSafari || isStandalone || dismissed) return;
+
+    const banner = document.getElementById('ios-install-banner');
+    const dismiss = document.getElementById('ios-install-dismiss');
+    if (!banner || !dismiss) return;
+    banner.style.display = 'flex';
+    dismiss.addEventListener('click', () => {
+        banner.style.display = 'none';
+        localStorage.setItem('tabooseyIosInstallDismissed', '1');
+    });
+})();
