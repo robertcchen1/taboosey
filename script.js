@@ -133,6 +133,7 @@ const ui = {
     errorMsgTurn: document.getElementById('error-msg-turn'),
     
     timerDisplay: document.getElementById('timer-display'),
+    pausedIndicator: document.getElementById('paused-indicator'),
     activeCard: document.getElementById('active-card'),
     targetWord: document.getElementById('target-word'),
     tabooWords: document.getElementById('taboo-words'),
@@ -650,13 +651,14 @@ function handleGuess(points) {
 
 function togglePause() {
     isPaused = !isPaused;
+    if (ui.pausedIndicator) ui.pausedIndicator.style.display = isPaused ? 'inline' : 'none';
     if (isPaused) {
         ui.pauseBtn.innerText = "Resume";
         ui.pauseBtn.classList.replace('btn-warning', 'btn-secondary');
     } else {
         ui.pauseBtn.innerText = "Pause";
         ui.pauseBtn.classList.replace('btn-secondary', 'btn-warning');
-        if (useAI) maintainAIBuffer(); 
+        if (useAI) maintainAIBuffer();
     }
 }
 
@@ -806,31 +808,39 @@ if ('serviceWorker' in navigator && !window.Capacitor) {
     const aboutHint = document.getElementById('about-install-hint');
     const aboutBtn = document.getElementById('about-install-btn');
 
-    function setAboutHint() {
+    function manualHint() {
+        if (isIOSSafari) {
+            return 'On iPhone: tap the <i class="fas fa-arrow-up-from-bracket"></i> Share button, then <strong>Add to Home Screen</strong>.';
+        }
+        if (isIOS) {
+            return 'Installing on iPhone only works from Safari. Open <strong>taboosey.com</strong> in Safari, then tap <i class="fas fa-arrow-up-from-bracket"></i> Share &rarr; <strong>Add to Home Screen</strong>.';
+        }
+        if (isAndroid) {
+            return 'On Android: open the Chrome menu (<i class="fas fa-ellipsis-vertical"></i>) and choose <strong>Install app</strong>.';
+        }
+        return 'To install, open your browser menu or click the install icon in the address bar (Chrome/Edge).';
+    }
+
+    function render() {
         if (!aboutHint) return;
         if (isInstalled) {
             aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is installed on this device.';
             if (aboutBtn) aboutBtn.style.display = 'none';
-            return;
-        }
-        if (isIOSSafari) {
-            aboutHint.innerHTML = 'On iPhone: tap the <i class="fas fa-arrow-up-from-bracket"></i> Share button, then <strong>Add to Home Screen</strong>.';
-        } else if (isIOS) {
-            aboutHint.innerHTML = 'Installing on iPhone only works from Safari. Open <strong>taboosey.com</strong> in Safari, then tap <i class="fas fa-arrow-up-from-bracket"></i> Share &rarr; <strong>Add to Home Screen</strong>.';
-        } else if (isAndroid) {
-            aboutHint.innerHTML = 'On Android: tap <strong>Install App</strong> below, or open Chrome menu (<i class="fas fa-ellipsis-vertical"></i>) and choose <strong>Install app</strong>.';
+        } else if (deferredPrompt) {
+            aboutHint.innerHTML = 'Click <strong>Install App</strong> below to add Taboosey to your device.';
+            if (aboutBtn) aboutBtn.style.display = 'inline-block';
         } else {
-            aboutHint.innerHTML = 'On desktop: click <strong>Install App</strong> below, or click the <i class="fas fa-download"></i> icon in your browser\'s address bar (Chrome/Edge).';
+            aboutHint.innerHTML = manualHint();
+            if (aboutBtn) aboutBtn.style.display = 'none';
         }
     }
-    setAboutHint();
+    render();
 
     function markInstalled() {
         isInstalled = true;
         localStorage.setItem('tabooseyInstalled', '1');
         if (banner) banner.style.display = 'none';
-        if (aboutBtn) aboutBtn.style.display = 'none';
-        if (aboutHint) aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is installed on this device.';
+        render();
     }
 
     async function triggerInstall() {
@@ -839,19 +849,22 @@ if ('serviceWorker' in navigator && !window.Capacitor) {
         const { outcome } = await deferredPrompt.userChoice;
         deferredPrompt = null;
         if (outcome === 'accepted') markInstalled();
+        else render();
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        if (isInstalled) {
-            isInstalled = false;
-            localStorage.removeItem('tabooseyInstalled');
-            setAboutHint();
-        }
-        if (aboutBtn) aboutBtn.style.display = 'inline-block';
+        if (isInstalled) return;
+        render();
         if (banner && !bannerDismissed) banner.style.display = 'flex';
     });
+
+    if (!isInstalled && navigator.getInstalledRelatedApps) {
+        navigator.getInstalledRelatedApps().then(apps => {
+            if (apps.some(app => app.platform === 'webapp')) markInstalled();
+        }).catch(() => {});
+    }
 
     if (bannerInstallBtn) bannerInstallBtn.addEventListener('click', triggerInstall);
     if (aboutBtn) aboutBtn.addEventListener('click', triggerInstall);
