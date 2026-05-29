@@ -14,6 +14,8 @@ let roundCounter = 1;
 let historyLog = [];
 
 let timeLimit = 60;
+let totalRounds = Infinity;
+let infiniteRounds = true;
 let currentCategory = "All";
 let customCategoryText = "";
 let timeLeft = 0;
@@ -113,7 +115,8 @@ function playSound(type) {
 const screens = {
     setup: document.getElementById('setup-screen'),
     turn: document.getElementById('turn-screen'),
-    game: document.getElementById('game-screen')
+    game: document.getElementById('game-screen'),
+    gameover: document.getElementById('gameover-screen')
 };
 
 const ui = {
@@ -133,6 +136,7 @@ const ui = {
     errorMsgTurn: document.getElementById('error-msg-turn'),
     
     timerDisplay: document.getElementById('timer-display'),
+    timerBar: document.getElementById('timer-bar'),
     pausedIndicator: document.getElementById('paused-indicator'),
     activeCard: document.getElementById('active-card'),
     targetWord: document.getElementById('target-word'),
@@ -161,7 +165,18 @@ const ui = {
     openRulesLinks: document.querySelectorAll('.how-to-play-link'),
     closeRulesBtn: document.getElementById('close-rules-btn'),
     closeDetailsBtn: document.getElementById('close-details-btn'),
-    clearMemoryLink: document.getElementById('clear-memory-link')
+    clearMemoryLink: document.getElementById('clear-memory-link'),
+
+    roundsSelectSetup: document.getElementById('rounds-limit'),
+    roundsSelectTurn: document.getElementById('rounds-limit-turn'),
+
+    goWinnerText: document.getElementById('gameover-winner-text'),
+    goT1Score: document.getElementById('go-t1-score'),
+    goT2Score: document.getElementById('go-t2-score'),
+    goCategory: document.getElementById('go-category'),
+    goHistoryList: document.getElementById('go-history-list'),
+    playAgainBtn: document.getElementById('play-again-btn'),
+    newGameBtn: document.getElementById('new-game-btn')
 };
 
 function showCustomModal(title, message, isConfirm, onConfirmCallback) {
@@ -255,11 +270,12 @@ const sitePages = document.querySelectorAll('.site-page');
 
 navTabs.forEach(tab => {
     tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-target');
+        if (!target) return; // <a> nav links navigate to a new page — let the browser handle it
         navTabs.forEach(t => t.classList.remove('active'));
         sitePages.forEach(p => p.classList.remove('active'));
-        
         tab.classList.add('active');
-        document.getElementById(tab.getAttribute('data-target')).classList.add('active');
+        document.getElementById(target).classList.add('active');
     });
 });
 
@@ -268,9 +284,14 @@ ui.catInputTurn.addEventListener('change', (e) => syncCategories(e.target));
 ui.customCatInputSetup.addEventListener('input', (e) => syncCustomText(e.target));
 ui.customCatInputTurn.addEventListener('input', (e) => syncCustomText(e.target));
 
+// Rounds sync
+ui.roundsSelectSetup.addEventListener('change', (e) => syncRounds(e.target));
+ui.roundsSelectTurn.addEventListener('change', (e) => syncRounds(e.target));
+
+
 ui.muteBtn.addEventListener('click', () => toggleMute());
 
-ui.homeBtn.addEventListener('click', () => {
+if (ui.homeBtn) ui.homeBtn.addEventListener('click', () => {
     showCustomModal('<i class="fas fa-home"></i> Quit Game?', "Return to the main menu? The current game's scores will be lost.", true, () => {
         showScreen('setup');
     });
@@ -311,10 +332,67 @@ document.getElementById('taboo-btn').addEventListener('click', () => handleGuess
 ui.pauseBtn.addEventListener('click', togglePause);
 ui.endRoundBtn.addEventListener('click', endTurn);
 
+document.getElementById('play-again-btn').addEventListener('click', () => {
+    resetScores();
+    showScreen('turn');
+});
+document.getElementById('new-game-btn').addEventListener('click', () => {
+    showScreen('setup');
+});
+
 function showScreen(screenName) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[screenName].classList.add('active');
-    ui.homeBtn.style.display = screenName === 'turn' ? 'flex' : 'none';
+    if (ui.homeBtn) ui.homeBtn.style.display = screenName === 'turn' ? 'flex' : 'none';
+}
+
+function syncRounds(source) {
+    const val = source.value;
+    infiniteRounds = (val === 'inf');
+    totalRounds = infiniteRounds ? Infinity : parseInt(val);
+    ui.roundsSelectSetup.value = val;
+    ui.roundsSelectTurn.value = val;
+}
+
+function showGameOver() {
+    const s1 = totalScores[1];
+    const s2 = totalScores[2];
+    let winnerHTML;
+    if (s1 > s2) {
+        winnerHTML = '<span class="go-winner-team t1-score">&#127942; Team 1 Wins!</span>';
+    } else if (s2 > s1) {
+        winnerHTML = '<span class="go-winner-team t2-score">&#127942; Team 2 Wins!</span>';
+    } else {
+        winnerHTML = '<span class="go-winner-team">&#129309; It\'s a Tie!</span>';
+    }
+    ui.goWinnerText.innerHTML = winnerHTML;
+    ui.goT1Score.innerText = s1;
+    ui.goT2Score.innerText = s2;
+
+    // Category label
+    const catLabel = currentCategory === 'Custom'
+        ? 'Custom &middot; ' + (customCategoryText || 'AI')
+        : currentCategory;
+    ui.goCategory.innerHTML = 'Category: <strong>' + catLabel + '</strong>';
+
+    // History
+    if (historyLog.length === 0) {
+        ui.goHistoryList.innerHTML = '<li class="history-placeholder">No rounds played.</li>';
+    } else {
+        ui.goHistoryList.innerHTML = [...historyLog].reverse().map((log, index) => {
+            const realIndex = historyLog.length - 1 - index;
+            return `
+            <li class="history-item">
+                <span class="hg-round hist-round">Round ${log.round}</span>
+                <span class="hg-t1 hist-score t1-score">${log.t1}</span>
+                <span class="hg-blank hist-vs">-</span>
+                <span class="hg-t2 hist-score t2-score">${log.t2}</span>
+                <button class="details-btn" onclick="openRoundDetails(${realIndex})"><i class="fas fa-search"></i></button>
+            </li>`;
+        }).join('');
+    }
+
+    showScreen('gameover');
 }
 
 function getFilteredDeck() {
@@ -355,10 +433,15 @@ function initializeGame() {
     timeLimit = parseInt(ui.timeInputSetup.value) || 60;
     syncCategories(ui.catInputSetup);
     syncCustomText(ui.customCatInputSetup);
-    ui.timeInputTurn.value = timeLimit; 
-    
+    syncRounds(ui.roundsSelectSetup);
+    ui.timeInputTurn.value = timeLimit;
+
     if (!audioCtx) audioCtx = new AudioContext();
-    
+
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'game_start', { category: currentCategory, use_ai: useAI });
+    }
+
     resetScores();
     showScreen('turn');
 
@@ -377,27 +460,43 @@ function resetScores() {
 function startTurn() {
     if (!validateInputs(ui.catInputTurn, ui.customCatInputTurn, ui.errorMsgTurn)) return;
 
-    timeLimit = parseInt(ui.timeInputTurn.value) || 60;
-
     syncCategories(ui.catInputTurn);
     syncCustomText(ui.customCatInputTurn);
-    
+
     // FIX: Compare against actual built deck state rather than what was loosely stored before the listener ran
     if (currentCategory !== activeDeckCategory || customCategoryText !== activeCustomText) {
         resetDeck();
     }
 
+    timeLimit = parseInt(ui.timeInputTurn.value) || 60;
+    syncRounds(ui.roundsSelectTurn);
+
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'turn_start', { team: currentTeam, round: roundCounter, category: currentCategory });
+    }
+
     timeLeft = timeLimit;
     currentRoundScore = 0;
-    currentRoundWords = []; 
+    currentRoundWords = [];
     isPaused = false;
     isFetching = false;
-    
+
     ui.timerDisplay.innerText = timeLeft;
     ui.currentRoundScore.innerText = currentRoundScore;
     ui.pauseBtn.innerText = "Pause";
     ui.pauseBtn.classList.replace('btn-secondary', 'btn-warning');
-    
+
+    // Reset timer bar
+    if (ui.timerBar) {
+        ui.timerBar.style.transition = 'none';
+        ui.timerBar.style.width = '100%';
+        ui.timerBar.classList.remove('danger');
+        // Re-enable transition after reset (next frame)
+        requestAnimationFrame(() => {
+            ui.timerBar.style.transition = 'width 0.9s linear, background-color 0.3s';
+        });
+    }
+
     showScreen('game');
     loadNextCard();
     
@@ -405,11 +504,17 @@ function startTurn() {
         if (!isPaused && !isFetching) {
             timeLeft--;
             ui.timerDisplay.innerText = timeLeft;
-            
+
+            // Update timer bar
+            if (ui.timerBar) {
+                ui.timerBar.style.width = (timeLeft / timeLimit * 100) + '%';
+                if (timeLeft <= 10) ui.timerBar.classList.add('danger');
+            }
+
             if (timeLeft <= 10 && timeLeft > 0) {
                 playSound('tick');
             }
-            
+
             if (timeLeft <= 0) {
                 playSound('taboo');
                 endTurn();
@@ -432,6 +537,9 @@ function getNextDeckCard() {
 function triggerAIPreFetch() {
     if (!useAI || isBackgroundFetching) return;
     const epoch = fetchEpoch;
+    if (typeof gtag !== 'undefined' && customCategoryText.trim()) {
+        gtag('event', 'ai_category_used', { topic: customCategoryText.trim() });
+    }
     fillBufferFromLocal();
     if (aiBuffer.length < 10) {
         isBackgroundFetching = true;
@@ -664,19 +772,23 @@ function togglePause() {
 
 function endTurn() {
     clearInterval(timerInterval);
-    
-    isFetching = false; 
+
+    isFetching = false;
     setLoadingState(false);
-    
+
     if (currentCard) {
         seenWords.push(currentCard);
-        saveHistoryToStorage(); 
-        currentCard = null; 
+        saveHistoryToStorage();
+        currentCard = null;
     }
-    
+
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'round_end', { team: currentTeam, score: currentRoundScore, words_played: currentRoundWords.length });
+    }
+
     totalScores[currentTeam] += currentRoundScore;
     const actualRound = Math.ceil(roundCounter / 2);
-    
+
     if (currentTeam === 1) {
         historyLog.push({ round: actualRound, t1: currentRoundScore, t1Words: [...currentRoundWords], t2: '?', t2Words: [] });
     } else {
@@ -687,12 +799,19 @@ function endTurn() {
             historyLog.push({ round: actualRound, t1: '?', t1Words: [], t2: currentRoundScore, t2Words: [...currentRoundWords] });
         }
     }
-    
+
     currentTeam = currentTeam === 1 ? 2 : 1;
     roundCounter++;
-    
+
     aiBuffer = [];
     isBackgroundFetching = false;
+
+    // Check end condition: both teams just played a full round and target reached
+    const completedFullRounds = Math.floor(roundCounter / 2);
+    if (!infiniteRounds && currentTeam === 1 && completedFullRounds >= totalRounds) {
+        showGameOver();
+        return;
+    }
 
     updateTurnScreenUI();
     showScreen('turn');
@@ -753,6 +872,23 @@ window.openRoundDetails = function(index) {
     ui.detailsModal.classList.add('active');
 };
 
+// Keyboard shortcuts (desktop): Space/→ = Correct, ↓ = Skip, ←/Backspace = Taboo
+document.addEventListener('keydown', (e) => {
+    if (!screens.game.classList.contains('active') || isPaused || isFetching) return;
+    // Don't fire if focus is on an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === ' ' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleGuess(1);
+    } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        handleGuess(0);
+    } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+        e.preventDefault();
+        handleGuess(-1);
+    }
+});
+
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
@@ -777,7 +913,7 @@ if (window.Capacitor) {
         if (screens.setup.classList.contains('active')) {
             App.exitApp();
         } else if (screens.game.classList.contains('active')) {
-            ui.homeBtn.click();
+            if (ui.homeBtn) ui.homeBtn.click();
         } else {
             showScreen('setup');
         }

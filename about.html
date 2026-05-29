@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Taboosey — Free Online Taboo Word Game</title>
+    <meta name="description" content="About Taboosey: a free browser-based Taboo word game with AI-generated custom decks, smart word memory, and PWA support.">
+    <link rel="canonical" href="https://taboosey.com/about.html">
+    <link rel="icon" type="image/png" href="icon.png?v=2">
+    <link rel="apple-touch-icon" href="icon.png?v=2">
+    <link rel="manifest" href="manifest.json">
+    <meta name="google-adsense-account" content="ca-pub-7570484814519250">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: #1a1a1a; color: #333; line-height: 1.7; }
+
+        /* Nav */
+        .top-nav { background: #111; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .nav-content { max-width: 800px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; height: 60px; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #f39c12; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+        .nav-links { display: flex; height: 100%; }
+        .nav-link { color: #ccc; font-size: 1.05rem; font-weight: bold; padding: 0 15px; text-decoration: none; display: flex; align-items: center; border-bottom: 3px solid transparent; transition: 0.2s; }
+        .nav-link:hover { color: white; background: rgba(255,255,255,0.05); }
+        .nav-link.active { color: #f39c12; border-bottom: 3px solid #f39c12; }
+
+        /* Content */
+        .page-content { max-width: 800px; margin: 30px auto; padding: 30px; background: #ecf0f1; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; }
+        h1 { color: #111; border-bottom: 2px solid #ccc; padding-bottom: 12px; font-size: 1.9rem; margin-top: 0; }
+        h2 { color: #2c3e50; font-size: 1.3rem; margin-top: 30px; }
+        p { margin: 0 0 14px 0; }
+        ul { margin: 0 0 14px 0; padding-left: 24px; }
+        li { margin-bottom: 8px; }
+        a { color: #e67e22; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .feature-list { list-style: none; padding: 0; }
+        .feature-list li { padding: 9px 0 9px 28px; position: relative; border-bottom: 1px solid #ddd; }
+        .feature-list li:last-child { border-bottom: none; }
+        .feature-list li::before { content: "✓"; position: absolute; left: 0; color: #27ae60; font-weight: bold; }
+
+        .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+        .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 1rem; text-decoration: none; border: none; cursor: pointer; }
+        .btn-orange { background: #f39c12; color: #fff; }
+        .btn-orange:hover { background: #e67e22; text-decoration: none; }
+        .btn-green { background: #27ae60; color: #fff; }
+        .btn-green:hover { background: #1e8449; text-decoration: none; }
+
+        .install-section { background: #fff; border-radius: 10px; padding: 20px; margin-top: 20px; text-align: center; }
+        .install-section h2 { margin-top: 0; }
+        #about-install-hint { color: #555; margin-bottom: 12px; }
+        #about-install-btn { background: #27ae60; color: #fff; border: none; padding: 12px 25px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; display: none; margin-top: 8px; }
+        #about-install-btn:hover { background: #1e8449; }
+
+        .legal-row { margin-top: 25px; padding-top: 18px; border-top: 1px solid #ccc; text-align: center; color: #666; font-size: 0.92rem; }
+        .legal-row a { color: #3498db; margin: 0 8px; }
+
+        footer { text-align: center; color: #888; font-size: 0.85rem; padding: 20px; margin-top: 10px; }
+        footer a { color: #aaa; }
+        @media (max-width: 520px) {
+            .page-content { padding: 20px 16px; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="top-nav">
+    <div class="nav-content">
+        <a href="index.html" class="logo"><i class="fas fa-cat"></i> Taboosey</a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Play</a>
+            <a href="guide.html" class="nav-link">Guide</a>
+            <a href="about.html" class="nav-link active">About</a>
+        </div>
+    </div>
+</nav>
+
+<div class="page-content">
+    <h1>About Taboosey</h1>
+
+    <p>Taboosey is a free online party word game built around the classic Taboo game concept. One player describes a target word to their team — without saying any of the forbidden taboo words — while their teammates race to guess correctly before the timer runs out. No physical cards needed. No app to download. Just open the site and play.</p>
+
+    <div class="cta-row">
+        <a href="index.html" class="btn btn-orange">Play Now — It's Free</a>
+        <a href="guide.html" class="btn btn-green">How to Play</a>
+    </div>
+
+    <h2>Why We Built Taboosey</h2>
+    <p>The physical Taboo card game is a classic — but the cards get worn out, the box gets lost, and the 500-card deck eventually runs dry after enough game nights. Buying a new edition costs money, and the topics feel dated fast. We wanted a version that never runs out of words, works on the device already in your pocket, and lets you play on any topic you can dream up.</p>
+    <p>Taboosey solves all of that. The built-in word deck spans hundreds of original cards across six categories, and the Custom (AI) feature — powered by Google's Gemini API — generates fresh decks on any topic you type. A smart deck-memory system tracks which words you have already seen, so even over dozens of game nights, you never get a repeated card.</p>
+
+    <h2>What Makes Taboosey Different</h2>
+    <ul class="feature-list">
+        <li><strong>Unlimited words:</strong> Hundreds of built-in cards across six categories, plus infinite AI-generated decks on any topic.</li>
+        <li><strong>Smart deck memory:</strong> Your browser remembers every word you have seen. No repeats — ever — until you reset the deck.</li>
+        <li><strong>Custom AI topics:</strong> Type "90s hip-hop," "Italian cuisine," "Greek mythology," or anything else. Fresh cards are generated instantly.</li>
+        <li><strong>Rounds mode:</strong> Set 1–5 rounds for a proper finish line, or play Endless for a casual session. Scores tracked automatically with full round history.</li>
+        <li><strong>Works on any device:</strong> Phones, tablets, and desktop computers. Fully mobile-optimised, tested on iOS and Android.</li>
+        <li><strong>Installs as a PWA:</strong> Add to your home screen for fullscreen play, just like a native app — no app store required.</li>
+        <li><strong>Completely free:</strong> No account, no subscription, no in-app purchases. The full feature set is available to everyone.</li>
+    </ul>
+
+    <h2>Technology</h2>
+    <p>Taboosey is a Progressive Web App (PWA) built with plain HTML, CSS, and JavaScript — no frameworks, no bloat. It runs entirely in your browser. Game data (scores, preferences, seen words) is stored locally in your browser using localStorage; nothing is sent to a server. The Custom (AI) category uses Google's Gemini API to generate word cards on request.</p>
+    <p>Because Taboosey is a PWA, it can be installed directly from your browser to your home screen on both Android and iOS. Once installed, it opens in fullscreen mode without a browser address bar, giving it the feel of a native app.</p>
+
+    <div class="install-section">
+        <h2>Install Taboosey as an App</h2>
+        <p id="about-install-hint">Add Taboosey to your home screen for a fullscreen app experience.</p>
+        <button id="about-install-btn">&#x2B07; Install App</button>
+    </div>
+
+    <h2>Contact &amp; Feedback</h2>
+    <p>We actively improve Taboosey based on player feedback. If you have a bug to report, a category suggestion, or just want to say hello, reach out at <a href="mailto:feedback@taboosey.com">feedback@taboosey.com</a>. We read every message.</p>
+
+    <div class="legal-row">
+        <a href="privacy.html">Privacy Policy</a> |
+        <a href="terms.html">Terms of Service</a>
+    </div>
+</div>
+
+<footer>
+    <a href="index.html">Play</a> &nbsp;&middot;&nbsp;
+    <a href="guide.html">Guide</a> &nbsp;&middot;&nbsp;
+    <a href="about.html">About</a> &nbsp;&middot;&nbsp;
+    <a href="privacy.html">Privacy Policy</a> &nbsp;&middot;&nbsp;
+    <a href="terms.html">Terms of Service</a>
+</footer>
+
+<script>
+(function setupInstall() {
+    if (window.Capacitor) return;
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOSSafari = isIOS && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS|mercury/i.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    let isInstalled = isStandalone || localStorage.getItem('tabooseyInstalled') === '1';
+    let deferredPrompt = null;
+
+    const aboutHint = document.getElementById('about-install-hint');
+    const aboutBtn = document.getElementById('about-install-btn');
+
+    function manualHint() {
+        if (isIOSSafari) return 'On iPhone: tap the <i class="fas fa-arrow-up-from-bracket"></i> Share button, then <strong>Add to Home Screen</strong>.';
+        if (isIOS) return 'Installing on iPhone only works from Safari. Open <strong>taboosey.com</strong> in Safari, then tap Share &rarr; <strong>Add to Home Screen</strong>.';
+        if (isAndroid) return 'On Android: open the Chrome menu and choose <strong>Install app</strong>.';
+        return 'To install, open your browser menu or click the install icon in the address bar (Chrome/Edge).';
+    }
+
+    function render() {
+        if (!aboutHint) return;
+        if (isInstalled) {
+            aboutHint.innerHTML = '<i class="fas fa-check"></i> Taboosey is installed on this device.';
+            if (aboutBtn) aboutBtn.style.display = 'none';
+        } else if (deferredPrompt) {
+            aboutHint.innerHTML = 'Click <strong>Install App</strong> below to add Taboosey to your device.';
+            if (aboutBtn) aboutBtn.style.display = 'inline-block';
+        } else {
+            aboutHint.innerHTML = manualHint();
+            if (aboutBtn) aboutBtn.style.display = 'none';
+        }
+    }
+    render();
+
+    function markInstalled() {
+        isInstalled = true;
+        localStorage.setItem('tabooseyInstalled', '1');
+        render();
+    }
+
+    async function triggerInstall() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        if (outcome === 'accepted') markInstalled(); else render();
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (!isInstalled) render();
+    });
+
+    if (!isInstalled && navigator.getInstalledRelatedApps) {
+        navigator.getInstalledRelatedApps().then(apps => {
+            if (apps.some(a => a.platform === 'webapp')) markInstalled();
+        }).catch(() => {});
+    }
+
+    if (aboutBtn) aboutBtn.addEventListener('click', triggerInstall);
+    window.addEventListener('appinstalled', markInstalled);
+})();
+</script>
+</body>
+</html>

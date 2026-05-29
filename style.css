@@ -59,6 +59,7 @@ body {
 
 .nav-tab:hover { color: white; background: rgba(255,255,255,0.05); }
 .nav-tab.active { color: #f39c12; border-bottom: 3px solid #f39c12; }
+a.nav-tab { text-decoration: none; display: flex; align-items: center; }
 
 /* --- OUTER PAGES --- */
 .site-page {
@@ -87,6 +88,7 @@ body {
 
 .info-container h2 { margin-top: 0; color: #111; border-bottom: 2px solid #ccc; padding-bottom: 10px; font-size: 1.6rem;}
 .info-container h3 { color: #2c3e50; margin-top: 25px; font-size: 1.2rem; }
+
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
@@ -215,7 +217,7 @@ input[type="number"]:focus, input[type="text"]:focus, .stylish-input:focus { bor
 .hg-round { text-align: left; }
 .hg-t1, .hg-t2, .hg-blank { text-align: center; }
 .history-container { max-height: 120px; overflow-y: auto; background: #f9f9f9; border-radius: 6px; padding: 8px; border: 1px solid #e0e0e0; }
-#score-history-list { list-style: none; padding: 0; margin: 0; }
+#score-history-list, #go-history-list { list-style: none; padding: 0; margin: 0; }
 .history-item { background: #fff; padding: 8px 15px; border-radius: 6px; margin-bottom: 5px; border: 1px solid #ddd; }
 .hist-round { font-weight: bold; color: #555; font-size: 0.95rem; }
 .hist-score { font-size: 1.1rem; font-weight: bold; }
@@ -304,8 +306,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Visual Feedback Flash Animations */
 @keyframes flashGreen {
-    0% { background-color: #d4efdf; border-color: #27ae60; transform: scale(1.02); }
-    100% { background-color: white; border-color: #111; transform: scale(1); }
+    0%   { background-color: #a9dfbf; border-color: #27ae60; transform: scale(1.04); box-shadow: 0 0 16px rgba(39,174,96,0.45); }
+    100% { background-color: white;   border-color: #111;    transform: scale(1);   box-shadow: none; }
 }
 @keyframes flashRed {
     0% { background-color: #fadbd8; border-color: #c0392b; transform: scale(0.98); }
@@ -313,6 +315,50 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .flash-green { animation: flashGreen 0.3s ease-out; }
 .flash-red { animation: flashRed 0.3s ease-out; }
+
+/* === TIMER PROGRESS BAR === */
+#timer-bar-wrap {
+    background: #ddd;
+    border-radius: 4px;
+    height: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+#timer-bar {
+    background: #f39c12;
+    height: 100%;
+    border-radius: 4px;
+    width: 100%;
+    transition: width 0.9s linear, background-color 0.3s;
+}
+#timer-bar.danger { background: #e74c3c; }
+
+/* === KEYBOARD LEGEND === */
+#keyboard-legend {
+    color: #aaa;
+    font-size: 0.78rem;
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+}
+@media (max-width: 480px) { #keyboard-legend { display: none; } }
+
+
+
+/* === GAME-OVER SCREEN === */
+.gameover-winner {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 10px 0 20px 0;
+    line-height: 1.2;
+}
+.go-winner-team { display: block; }
+.go-category-label {
+    text-align: center;
+    color: #777;
+    font-size: 0.92rem;
+    margin: -8px 0 12px 0;
+}
 
 /* === MOBILE OPTIMIZATION === */
 /* The CSS above handles desktop. This media query overrides those sizes when on a mobile device */

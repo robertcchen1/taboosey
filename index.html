@@ -28,6 +28,30 @@
     <meta name="twitter:description" content="Describe the word without saying the Taboo words!">
     <meta name="twitter:image" content="https://taboosey.com/social-preview-image.png">
 
+    <link rel="canonical" href="https://taboosey.com/">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "Taboosey",
+      "description": "Online Taboo word game — describe the word without saying the taboo words!",
+      "url": "https://taboosey.com",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Web, Android, iOS",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
+
+    <!-- Google Analytics GA4 — replace G-XXXXXXXXXX with your Measurement ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
     <meta name="google-adsense-account" content="ca-pub-7570484814519250">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7570484814519250" crossorigin="anonymous"></script>
 
@@ -61,8 +85,8 @@
             <div class="logo"><i class="fas fa-cat"></i> Taboosey</div>
             <div class="nav-links">
                 <button class="nav-tab active" data-target="page-play">Play</button>
-                <button class="nav-tab" data-target="page-guide">Guide</button>
-                <button class="nav-tab" data-target="page-about">About</button>
+                <a class="nav-tab" href="guide.html">Guide</a>
+                <a class="nav-tab" href="about.html">About</a>
             </div>
         </div>
     </nav>
@@ -98,6 +122,18 @@
                                 <input type="number" id="time-limit" value="60" min="10" max="120">
                                 <span class="unit">sec</span>
                             </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="stylish-label" for="rounds-limit">Rounds:</label>
+                            <select id="rounds-limit" class="stylish-input" style="max-width: 120px;">
+                                <option value="inf" selected>Endless</option>
+                                <option value="1">1 round</option>
+                                <option value="2">2 rounds</option>
+                                <option value="3">3 rounds</option>
+                                <option value="4">4 rounds</option>
+                                <option value="5">5 rounds</option>
+                            </select>
                         </div>
 
                         <div class="input-group">
@@ -165,20 +201,22 @@
                         </div>
                     </div>
 
-                    <div class="ad-container-manual">
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="ca-pub-7570484814519250"
-                             data-ad-slot="REPLACE_WITH_YOUR_AD_SLOT_ID"
-                             data-ad-format="horizontal"
-                             data-full-width-responsive="true"></ins>
-                    </div>
-
                     <div class="turn-controls">
                         <div class="settings-row">
                             <div class="setting-item">
                                 <label class="stylish-label" for="turn-time-limit">Time:</label>
                                 <input type="number" id="turn-time-limit" class="small-input" value="60" min="10" max="120">
+                            </div>
+                            <div class="setting-item">
+                                <label class="stylish-label" for="rounds-limit-turn">Rounds:</label>
+                                <select id="rounds-limit-turn" class="stylish-input small-select">
+                                    <option value="inf" selected>Endless</option>
+                                    <option value="1">1 round</option>
+                                    <option value="2">2 rounds</option>
+                                    <option value="3">3 rounds</option>
+                                    <option value="4">4 rounds</option>
+                                    <option value="5">5 rounds</option>
+                                </select>
                             </div>
                             <div class="setting-item">
                                 <label class="stylish-label" for="turn-category">Category:</label>
@@ -219,6 +257,7 @@
                             Score: <span id="current-round-score">0</span>
                         </div>
                     </div>
+                    <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
                     
                     <div class="card taboo-card" id="active-card">
                         <div id="loading-overlay" style="display: none;">
@@ -245,6 +284,41 @@
                     <div class="utility-controls">
                         <button id="pause-btn" class="btn-warning">Pause</button>
                         <button id="end-round-btn" class="btn-danger">End Round</button>
+                    </div>
+                    <div id="keyboard-legend">&#8592; Taboo &nbsp;&nbsp; &#8595; Skip &nbsp;&nbsp; &#8594; Correct</div>
+                </div>
+
+                <div id="gameover-screen" class="screen">
+                    <div class="gameover-winner" id="gameover-winner-text"></div>
+                    <div class="stats-panel">
+                        <div class="team-totals">
+                            <div class="team-stat">
+                                <h3 class="t1-label">Team 1</h3>
+                                <span id="go-t1-score" class="big-score t1-score">0</span>
+                            </div>
+                            <div class="team-stat">
+                                <h3 class="t2-label">Team 2</h3>
+                                <span id="go-t2-score" class="big-score t2-score">0</span>
+                            </div>
+                        </div>
+                        <p id="go-category" class="go-category-label"></p>
+                        <div class="history-section">
+                            <h3>Round History</h3>
+                            <div class="history-grid-header">
+                                <span class="hg-round">Round</span>
+                                <span class="hg-t1 t1-label">T1</span>
+                                <span class="hg-blank"></span>
+                                <span class="hg-t2 t2-label">T2</span>
+                                <span class="hg-details"></span>
+                            </div>
+                            <div class="history-container">
+                                <ul id="go-history-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-row" style="margin-top: 15px;">
+                        <button id="play-again-btn" class="btn-success">Play Again</button>
+                        <button id="new-game-btn" class="btn-warning">New Game</button>
                     </div>
                 </div>
 
@@ -293,52 +367,7 @@
                 </div>
             </div>
         </div>
-    </main>
 
-    <!-- PAGE 2: GUIDE -->
-    <main id="page-guide" class="site-page">
-        <div class="info-container">
-            <h2>Taboosey Guide</h2>
-            <h3>What is Taboosey?</h3>
-            <p>Taboosey is an online party word game that tests your creativity and communication. Whether you are hosting a game night with friends, running a team-building exercise on Zoom, or hanging out in the living room, Taboosey provides a fun experience. The concept is simple: describe the target word to your teammates without uttering any of the forbidden 'taboo' words listed on the card.</p>
-            <h3>How to Play</h3>
-            <p>Divide your group into two teams. When a team's round begins, one player is designated as the "clue-giver." This player looks at the screen, which displays a large <strong>Target Word</strong> at the top, followed by a list of 5 <strong>Taboo words</strong> below it.</p>
-            <ul>
-                <li><strong>Correct Guesses (+1 Point):</strong> If the team successfully guesses the word, tap the green "Correct" button to earn a point.</li>
-                <li><strong>Taboo Violation (-1 Point):</strong> If the clue-giver accidentally says a forbidden word, tap the red "Taboo" button. You lose a point.</li>
-                <li><strong>Skipping (0 Points):</strong> If a word is too difficult, you can pass by tapping the gray "Skip" button.</li>
-            </ul>
-            <h3>Winning Strategies</h3>
-            <p><strong>Use Synonyms:</strong> The best clue-givers immediately think of alternative definitions. If the target word is "Bark," don't just think of a dog—describe the outside of a tree!</p>
-            <p><strong>Fill in the Blank:</strong> Use common phrases or pop culture references where the target word is the missing piece (e.g., "The famous spy is named James ____").</p>
-            <h3>The Custom (AI) Category</h3>
-            <p>Our Custom (AI) Category feature allows you to input any topic—from "1990s Movies" to "Chemistry Terms"—and generates a custom playable deck using artificial intelligence.</p>
-        </div>
-    </main>
-
-    <!-- PAGE 3: ABOUT -->
-    <main id="page-about" class="site-page">
-        <div class="info-container" style="text-align: center;">
-            <h2>About Taboosey</h2>
-            <p>Taboosey is a fast and easy way to play a Taboo word-guessing game with friends, without needing physical cards. With a massive built-in word deck and smart memory tracking, words are never repeated, ensuring every round stays fresh and unpredictable.</p>
-            <div style="margin: 30px 0;">
-                <a href="mailto:feedback@taboosey.com?subject=Taboosey%20Feedback" class="btn-success" style="text-decoration: none; display: inline-block; padding: 12px 25px;"><i class="fas fa-envelope"></i> Contact Support</a>
-            </div>
-            <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
-                <h3>Install Taboosey as an App</h3>
-                <p id="about-install-hint">Add Taboosey to your home screen for fullscreen play.</p>
-                <button id="about-install-btn" class="btn-success" style="display: none; padding: 12px 25px; margin-top: 10px; border: none; cursor: pointer; font-size: 1rem;">
-                    <i class="fas fa-download"></i> Install App
-                </button>
-            </div>
-            <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
-                <h3>Legal Policies</h3>
-                <p>
-                    <a href="privacy.html" style="color: #3498db; text-decoration: none; margin: 0 10px;">Privacy Policy</a> | 
-                    <a href="terms.html" style="color: #3498db; text-decoration: none; margin: 0 10px;">Terms of Service</a>
-                </p>
-            </div>
-        </div>
     </main>
 
     <script src="words.js"></script>
