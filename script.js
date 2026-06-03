@@ -70,6 +70,7 @@ let typingPaused = false;          // true while player has text in the guess fi
 let speakClues = localStorage.getItem('tabooseySpeakClues') === 'true'; // read clues aloud (default off)
 let clueRate = parseFloat(localStorage.getItem('tabooseyClueRate')) || 1; // TTS speech rate
 let ttsSpeaking = false;           // true while a clue is being read aloud
+let interimSubmitTimer = null;     // debounce: auto-submit stable interim transcript
 let lastSpokenClue = '';           // normalized words of the clue currently/just spoken
 let ttsEndedAt = 0;                // timestamp (ms) when the last spoken clue finished
 const TTS_ECHO_GRACE_MS = 1500;    // window after speech where echo results may still arrive
@@ -225,7 +226,26 @@ function stripClueWords(text) {
 function showInterim(text) {
     // Setting .value directly does NOT fire the 'input' event, so it won't trip typingPaused.
     // Strip spoken-clue words so the echo never appears in the box, even mid-speech.
-    if (ui.soloGuessInput) ui.soloGuessInput.value = stripClueWords(text);
+    if (!ui.soloGuessInput) return;
+    const cleaned = stripClueWords(text);
+    ui.soloGuessInput.value = cleaned;
+
+    // Auto-submit if the cleaned transcript stays unchanged for 1 s (handles the case where
+    // the recognizer never fires a final result while TTS audio is in the room).
+    if (interimSubmitTimer) clearTimeout(interimSubmitTimer);
+    if (!cleaned) return;
+    interimSubmitTimer = setTimeout(() => {
+        interimSubmitTimer = null;
+        const current = (ui.soloGuessInput.value || '').trim();
+        if (current && !soloCardResolving && !isPaused && currentCard) {
+            ui.soloGuessInput.value = '';
+            submitSoloGuess(current);
+        }
+    }, 1000);
+}
+
+function clearInterimSubmitTimer() {
+    if (interimSubmitTimer) { clearTimeout(interimSubmitTimer); interimSubmitTimer = null; }
 }
 
 // --- Text-to-speech: read clues aloud (Solo vs AI) ---
@@ -249,14 +269,26 @@ function pickPreferredVoice() {
     if (!voices || !voices.length) return;
     const en = voices.filter(v => /^en(-|_|$)/i.test(v.lang));
     const pool = en.length ? en : voices;
-    // Preference order: modern natural voices and known female voices first.
+    // Preference order: high-quality natural voices first, then known female names.
+    // Android WebView exposes Google TTS voices; iOS/macOS has Siri-quality voices.
     const prefs = [
-        'google us english', 'microsoft aria', 'microsoft jenny', 'microsoft michelle',
-        'microsoft zira', 'samantha', 'karen', 'moira', 'tessa', 'fiona', 'serena',
-        'natural', 'female'
+        // Google TTS (Android WebView — highest quality available on-device)
+        'google us english',
+        // Google generic fallback (Android)
+        v => v.name.toLowerCase().startsWith('google') && /^en/i.test(v.lang),
+        // Microsoft neural voices (Edge/desktop)
+        'microsoft aria', 'microsoft jenny', 'microsoft michelle', 'microsoft natasha',
+        // Apple natural voices (macOS/iOS)
+        'samantha', 'karen', 'moira', 'tessa', 'fiona', 'serena',
+        // Microsoft legacy female
+        'microsoft zira',
+        // Generic quality markers
+        'natural', 'enhanced', 'premium', 'female'
     ];
     for (const key of prefs) {
-        const match = pool.find(v => v.name.toLowerCase().includes(key));
+        const match = typeof key === 'function'
+            ? pool.find(key)
+            : pool.find(v => v.name.toLowerCase().includes(key));
         if (match) { preferredVoice = match; return; }
     }
     preferredVoice = pool[0] || null;
@@ -273,8 +305,8 @@ function speakClue(text) {
         if (!preferredVoice) pickPreferredVoice();
         if (preferredVoice) { u.voice = preferredVoice; u.lang = preferredVoice.lang; }
         else { u.lang = 'en-US'; }
-        u.rate = clueRate;
-        u.pitch = 1.05; // a touch warmer / less flat
+        u.rate = 1.0;
+        u.pitch = 1.0;  // neutral pitch — let the voice's own quality shine
         const done = () => { ttsSpeaking = false; ttsEndedAt = Date.now(); };
         u.onend = done;
         u.onerror = done;
@@ -464,9 +496,6 @@ const ui = {
     pauseOnTypeCheckbox: document.getElementById('pause-on-type-checkbox'),
     soloMicBtn: document.getElementById('solo-mic-btn'),
     speakCluesCheckbox: document.getElementById('speak-clues-checkbox'),
-    speakRateRow: document.getElementById('speak-rate-row'),
-    speakRateSlider: document.getElementById('speak-rate-slider'),
-    speakRateValue: document.getElementById('speak-rate-value'),
     ttsEchoHint: document.getElementById('tts-echo-hint')
 };
 
@@ -593,6 +622,20 @@ if (ui.homeBtn) ui.homeBtn.addEventListener('click', () => {
     });
 });
 
+// Nav logo: return to setup when in a game, do nothing when already on setup.
+const navLogo = document.getElementById('nav-logo');
+if (navLogo) {
+    const handleLogoClick = () => {
+        if (screens.setup.classList.contains('active')) return; // already on setup, nothing to do
+        showCustomModal('<i class="fas fa-home"></i> Quit Game?', "Return to the main menu? The current game's scores will be lost.", true, () => {
+            endSoloRound && typeof endSoloRound === 'function' && screens.soloGame.classList.contains('active') && endSoloRound();
+            showScreen('setup');
+        });
+    };
+    navLogo.addEventListener('click', handleLogoClick);
+    navLogo.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') handleLogoClick(); });
+}
+
 ui.openRulesLinks.forEach(link => {
     link.addEventListener('click', () => ui.rulesModal.classList.add('active'));
 });
@@ -675,7 +718,6 @@ if (ui.pauseOnTypeCheckbox) {
 if (ui.speakCluesCheckbox) {
     if (!window.speechSynthesis) {
         if (ui.speakCluesCheckbox.closest('#speak-clues-label')) ui.speakCluesCheckbox.closest('#speak-clues-label').style.display = 'none';
-        if (ui.speakRateRow) ui.speakRateRow.style.display = 'none';
     } else {
         // Pick a natural female voice now and refresh when the voice list finishes loading.
         pickPreferredVoice();
@@ -685,26 +727,14 @@ if (ui.speakCluesCheckbox) {
             speechSynthesis.onvoiceschanged = pickPreferredVoice;
         }
         ui.speakCluesCheckbox.checked = speakClues;
-        if (ui.speakRateRow) ui.speakRateRow.style.display = speakClues ? '' : 'none';
-        if (ui.speakRateSlider) ui.speakRateSlider.value = clueRate;
-        if (ui.speakRateValue) ui.speakRateValue.innerText = `${clueRate.toFixed(1)}×`;
         updateTtsEchoHint();
 
         ui.speakCluesCheckbox.addEventListener('change', () => {
             speakClues = ui.speakCluesCheckbox.checked;
             localStorage.setItem('tabooseySpeakClues', speakClues ? 'true' : 'false');
-            if (ui.speakRateRow) ui.speakRateRow.style.display = speakClues ? '' : 'none';
             updateTtsEchoHint();
             if (!speakClues) stopSpeaking();
         });
-
-        if (ui.speakRateSlider) {
-            ui.speakRateSlider.addEventListener('input', () => {
-                clueRate = parseFloat(ui.speakRateSlider.value) || 1;
-                localStorage.setItem('tabooseyClueRate', String(clueRate));
-                if (ui.speakRateValue) ui.speakRateValue.innerText = `${clueRate.toFixed(1)}×`;
-            });
-        }
     }
 }
 
@@ -924,6 +954,7 @@ async function loadNextSoloCard() {
     if (timeLeft <= 0) return;
 
     clearAutoSkipTimer();
+    clearInterimSubmitTimer();
     soloCurrentEntries = [];
     soloClueQueue = [];
     soloAwaitingFirstClue = false;
@@ -1352,6 +1383,7 @@ function handleSoloCorrect() {
     soloAwaitingFirstClue = false;
     clearCluePaceTimer();
     clearAutoSkipTimer();
+    clearInterimSubmitTimer();
     stopSpeaking();
     soloRoundScore++;
     ui.soloRoundScoreEl.innerText = soloRoundScore;
@@ -1384,6 +1416,7 @@ function aiSkipCard(userInitiated) {
     setTypingPaused(false);
     clearCluePaceTimer();
     clearAutoSkipTimer();
+    clearInterimSubmitTimer();
     stopSpeaking();
     playSound('skip');
     const verb = userInitiated ? 'You skipped' : 'AI gave up';
@@ -1489,6 +1522,7 @@ function endSoloRound() {
     clearInterval(timerInterval);
     clearCluePaceTimer();
     clearAutoSkipTimer();
+    clearInterimSubmitTimer();
     voiceInput.stop();
     stopSpeaking();
     soloClueQueue = [];
