@@ -4,10 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Taboosey Game Guide — How to Play &amp; Win</title>
-    <meta name="description" content="Complete guide to playing Taboosey: rules, setup, category breakdowns, clue-giving strategies, hosting tips, and FAQ.">
+    <meta name="description" content="Complete guide to playing Taboosey: team rules, Solo vs AI mode (voice guesses + spoken clues), setup, category breakdowns, clue-giving strategies, hosting tips, and FAQ.">
     <link rel="canonical" href="https://taboosey.com/guide.html">
     <link rel="icon" type="image/png" href="icon.png?v=2">
     <meta name="google-adsense-account" content="ca-pub-7570484814519250">
+    <!-- Google Analytics GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-12813053FC"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-12813053FC');
+      gtag('set', 'user_properties', { platform: (window.Capacitor ? 'android_app' : 'web') });
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; }
@@ -46,10 +55,13 @@
         .faq-item strong { display: block; color: #111; margin-bottom: 6px; font-size: 1rem; }
         footer { text-align: center; color: #888; font-size: 0.85rem; padding: 20px; margin-top: 10px; }
         footer a { color: #aaa; }
-        @media (max-width: 520px) {
+        @media (max-width: 480px) {
             .page-content { padding: 20px 16px; }
             .category-grid { grid-template-columns: 1fr; }
             h1 { font-size: 1.5rem; }
+            .nav-content { height: 50px; }
+            .logo { font-size: 1.2rem; }
+            .nav-link { font-size: 0.9rem; padding: 0 10px; }
         }
     </style>
 </head>
@@ -77,10 +89,11 @@
     <p>Taboosey is a free online word-guessing party game based on the classic Taboo card game. The goal is simple: get your teammates to say the target word using only spoken clues — but you cannot say the target word itself or any of the five taboo words listed beneath it.</p>
     <p>What makes Taboosey different from the physical card game? You never run out of cards. The built-in deck spans hundreds of words across six categories, and a smart memory system ensures you never see the same word twice in the same session. The Custom (AI) feature takes it further — type any topic imaginable and the game generates a brand-new deck on the spot using artificial intelligence. No downloads, no accounts, no cost.</p>
     <p>Taboosey runs entirely in your web browser. It works on phones, tablets, and computers. One person holds the device as the clue-giver while the rest of the team guesses. When the timer runs out, pass the phone to the other team.</p>
+    <p>No group handy? Taboosey also has a <strong>Solo vs AI</strong> mode where the AI is the clue-giver and you are the guesser. You can type your guesses or simply speak them, and even have the AI read its clues aloud. Full details are in the <a href="#solo-vs-ai">Solo vs AI Mode</a> section below.</p>
 
     <h2>How to Play: Step-by-Step Rules</h2>
-    <p><strong>Players:</strong> Taboosey works best with 4–8 players split into two teams, but you can play with as few as 2 people (one versus one).</p>
-    <p><strong>Setup:</strong> Open <a href="index.html">taboosey.com</a> on one shared device. Choose your time limit (60 seconds is standard), select a category, and set the number of rounds or leave it on Endless. Tap <em>Start Game</em> to begin.</p>
+    <p><strong>Players:</strong> Taboosey works best with 4–8 players split into two teams, but you can play with as few as 2 people (one versus one) — or entirely on your own in <a href="#solo-vs-ai">Solo vs AI</a> mode.</p>
+    <p><strong>Setup:</strong> Open <a href="index.html">taboosey.com</a> on one shared device. Choose your time limit (90 seconds is the default), select a category, and set the number of rounds or leave it on Endless. Tap <em>Start Team Game</em> to begin — or <em>Solo vs AI</em> to play by yourself.</p>
     <p><strong>Each round:</strong></p>
     <ol>
         <li>One player on the active team becomes the clue-giver and holds the screen so only they can see it.</li>
@@ -97,8 +110,36 @@
     </ol>
     <p><strong>Winning:</strong> In Rounds mode, the team with the higher total score after all rounds are completed wins. In Endless mode, teams keep playing until they decide to stop — the team with more points wins.</p>
 
+    <h2 id="solo-vs-ai">Solo vs AI Mode</h2>
+    <p>Solo vs AI is a single-player way to play Taboosey when you don't have a group. In this mode <strong>the AI is the clue-giver and you are the guesser</strong>. The AI knows a hidden target word and feeds you a stream of clues — without ever saying the word or its taboo words — while you race to guess it before the timer runs out.</p>
+    <p>Tap <strong>Solo vs AI</strong> on the home screen (under <em>Start Team Game</em>) to begin. Pick a time limit, rounds, and category just like a team game; Custom (AI) topics work here too.</p>
+
+    <h3>How a Solo Round Works</h3>
+    <ol>
+        <li>A card is drawn and you see the <strong>number of words</strong> in the answer at the top — one underline per word (e.g. a two-word phrase shows two blanks).</li>
+        <li>The AI posts an opening clue, then keeps adding new clues at a natural pace, reacting to what you guess.</li>
+        <li>Type a guess and press <em>Guess</em>, or tap the <i class="fas fa-microphone"></i> microphone and <strong>say it out loud</strong>.</li>
+        <li>You get instant feedback: a correct word fills its blank in green; close guesses get hints like "right idea — try the plural," and for phrases the game tells you which word you nailed.</li>
+        <li>Each word you solve scores <span class="score-chip chip-green">+1</span>. The next card loads automatically.</li>
+        <li>Stuck? Type or say <em>"skip"</em>, or tap <strong>Skip</strong>, to move on for no penalty. If the AI runs out of useful clues it will eventually give up on a word and reveal it — but it gives you a few seconds with its final clue first.</li>
+    </ol>
+
+    <h3>Voice Input — Speak Your Guesses</h3>
+    <p>Tap the <i class="fas fa-microphone"></i> mic button next to the guess box to turn on continuous listening. Just say your guesses naturally — each phrase is submitted automatically, and you can keep talking across cards without tapping again. Tap the mic again to stop. Voice input works in Chrome and Edge on desktop and in the Taboosey Android app; if your browser doesn't support speech recognition, the mic button simply doesn't appear.</p>
+
+    <h3>Spoken Clues — Let the AI Read to You</h3>
+    <p>Tick <strong>🔊 Speak clues aloud</strong> below the guess box to have each clue read out in a natural voice, with a <strong>speed slider</strong> to set how fast it talks. This makes Solo mode playable hands-free and eyes-free — great for the car or while doing something else. If you use spoken clues together with voice input, <strong>headphones are recommended</strong> so the microphone doesn't hear the clue being read; without them, Taboosey still filters out the clue words it spoke so they don't get entered as guesses.</p>
+
+    <h3>Solo Tips</h3>
+    <ul>
+        <li>Guess freely and often — wrong guesses cost nothing and actually help, because the AI uses them to steer its next clue toward what you're missing.</li>
+        <li>For phrases, lock in the words you do know; the filled-in blanks narrow down the rest.</li>
+        <li>If a clue is confusing, wait a beat — the AI's next clue usually comes at it from a different angle.</li>
+        <li>Use <em>Pause timer while typing</em> (on by default) so long answers don't eat your clock; with voice input the timer runs at natural speaking speed.</li>
+    </ul>
+
     <h2>Setting Up Your Game</h2>
-    <p><strong>Time limit:</strong> The default is 60 seconds per round. Shorter times (30–45 seconds) create a frantic, high-energy game. Longer times (75–90 seconds) give beginners more breathing room. You can change the time limit between rounds from the turn screen without resetting scores.</p>
+    <p><strong>Time limit:</strong> The default is 90 seconds per round. Shorter times (30–45 seconds) create a frantic, high-energy game. Longer times give beginners more breathing room. You can change the time limit between rounds from the turn screen without resetting scores.</p>
     <p><strong>Rounds:</strong> Choose 1, 2, 3, 4, or 5 rounds, or leave it on <em>Endless</em>. One full round = each team plays once. A 3-round game means each team gets 3 turns total. When all rounds are complete, Taboosey automatically shows the final scores and announces the winner.</p>
     <p><strong>Category:</strong> Pick a built-in category that suits your group, or choose Custom (AI) and type any topic. You can switch categories between rounds — great for mixing things up mid-game.</p>
     <p><strong>Resetting:</strong> Use the <em>Reset</em> button on the turn screen to clear all scores and start fresh. This does not reset the smart deck memory — so words you have already played will not come back.</p>
@@ -176,6 +217,7 @@
 
     <h3>House Rules</h3>
     <p>The default rules work well as-is, but common house rules include: allowing one skip per round without penalty, requiring the clue-giver to stand up, allowing teammates only three guesses per word, or switching clue-givers mid-round after a taboo violation. Agree on house rules before the game starts.</p>
+    <p><strong>How strict to be on guesses?</strong> Decide up front whether a near miss counts. Most groups play lenient — if a teammate says "running" when the word is "run," or "United States" for "USA," the clue-giver taps Correct and moves on, since the team clearly knew the answer. Competitive groups may instead require an <em>exact</em> match to the target word before scoring the point. Pick whichever keeps your table having fun; just apply the same standard to both teams. (Solo vs AI already handles this for you — it accepts close variations like plurals and verb tenses, and gives a hint when you're one small change away.)</p>
 
     <h3>Category Selection for Mixed Groups</h3>
     <p>If your group spans different ages or backgrounds, "Animals" and "Food &amp; Drink" are the most universally accessible. "Technology" and "Places" can disadvantage players who aren't enthusiasts in those areas. Custom (AI) topics can be tailored to exactly your group — "Disney movies," "Olympic sports," or "things in a kitchen" — making every game feel personal.</p>
@@ -213,7 +255,22 @@
 
     <div class="faq-item">
         <strong>How many players do you need?</strong>
-        As few as two players can play (one versus one), but the game is most entertaining with 4–8 players split into two teams. Larger groups can play in rotating format or with modified rules.
+        As few as two players can play (one versus one), but the game is most entertaining with 4–8 players split into two teams. Larger groups can play in rotating format or with modified rules. You can also play completely alone in <a href="#solo-vs-ai">Solo vs AI</a> mode, where the AI gives the clues.
+    </div>
+
+    <div class="faq-item">
+        <strong>Can I play by myself?</strong>
+        Yes — tap the Solo vs AI button on the home screen and the AI becomes the clue-giver for a hidden word while you guess by typing or speaking, scoring +1 for each word you solve. See the <a href="#solo-vs-ai">Solo vs AI Mode</a> section for the full rundown.
+    </div>
+
+    <div class="faq-item">
+        <strong>Can I speak my guesses instead of typing?</strong>
+        In Solo vs AI mode, yes. Tap the <i class="fas fa-microphone"></i> mic button by the guess box and speak naturally — guesses submit automatically and listening continues across cards. It works in Chrome/Edge on desktop and in the Android app; if your browser lacks speech recognition the mic button won't appear.
+    </div>
+
+    <div class="faq-item">
+        <strong>Can the AI read its clues out loud?</strong>
+        Yes — tick <strong>🔊 Speak clues aloud</strong> in Solo mode to hear each clue in a natural voice, with a speed slider to control the pace. If you also use voice input, headphones are recommended so the mic doesn't pick up the spoken clue.
     </div>
 
     <div class="faq-item">

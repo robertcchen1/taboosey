@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Taboosey — Free Online Taboo Word Game</title>
-    <meta name="description" content="About Taboosey: a free browser-based Taboo word game with AI-generated custom decks, smart word memory, and PWA support.">
+    <meta name="description" content="About Taboosey: a free browser-based Taboo word game with a Solo vs AI mode (voice guesses + spoken clues), AI-generated custom decks, smart word memory, and PWA support.">
     <link rel="canonical" href="https://taboosey.com/about.html">
     <link rel="icon" type="image/png" href="icon.png?v=2">
     <link rel="apple-touch-icon" href="icon.png?v=2">
     <link rel="manifest" href="manifest.json">
     <meta name="google-adsense-account" content="ca-pub-7570484814519250">
+    <!-- Google Analytics GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-12813053FC"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-12813053FC');
+      gtag('set', 'user_properties', { platform: (window.Capacitor ? 'android_app' : 'web') });
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; }
@@ -57,9 +66,12 @@
 
         footer { text-align: center; color: #888; font-size: 0.85rem; padding: 20px; margin-top: 10px; }
         footer a { color: #aaa; }
-        @media (max-width: 520px) {
+        @media (max-width: 480px) {
             .page-content { padding: 20px 16px; }
             h1 { font-size: 1.5rem; }
+            .nav-content { height: 50px; }
+            .logo { font-size: 1.2rem; }
+            .nav-link { font-size: 0.9rem; padding: 0 10px; }
         }
     </style>
 </head>
@@ -80,10 +92,20 @@
     <h1>About Taboosey</h1>
 
     <p>Taboosey is a free online party word game built around the classic Taboo game concept. One player describes a target word to their team — without saying any of the forbidden taboo words — while their teammates race to guess correctly before the timer runs out. No physical cards needed. No app to download. Just open the site and play.</p>
+    <p>Playing alone? Taboosey's <strong>Solo vs AI</strong> mode lets one person play: the AI is the clue-giver and you're the guesser. It feeds you progressive clues for a hidden word and you answer by typing — or by speaking, with optional spoken clues read back to you. It's a full single-player Taboo experience that needs no one else in the room.</p>
 
     <div class="cta-row">
         <a href="index.html" class="btn btn-orange">Play Now — It's Free</a>
         <a href="guide.html" class="btn btn-green">How to Play</a>
+    </div>
+
+    <h2>Install Taboosey</h2>
+    <p>Taboosey can be installed directly from your browser to your home screen on both Android and iOS. Once installed, it opens in fullscreen mode without a browser address bar, giving it the feel of a native app.</p>
+
+    <div class="install-section">
+        <h2>Install Taboosey as an App</h2>
+        <p id="about-install-hint">Add Taboosey to your home screen for a fullscreen app experience.</p>
+        <button id="about-install-btn">&#x2B07; Install App</button>
     </div>
 
     <h2>Why We Built Taboosey</h2>
@@ -92,6 +114,7 @@
 
     <h2>What Makes Taboosey Different</h2>
     <ul class="feature-list">
+        <li><strong>Solo vs AI mode:</strong> Play on your own — the AI gives the clues and you guess. A full single-player Taboo experience, no group required.</li>
         <li><strong>Unlimited words:</strong> Hundreds of built-in cards across six categories, plus infinite AI-generated decks on any topic.</li>
         <li><strong>Smart deck memory:</strong> Your browser remembers every word you have seen. No repeats — ever — until you reset the deck.</li>
         <li><strong>Custom AI topics:</strong> Type "90s hip-hop," "Italian cuisine," "Greek mythology," or anything else. Fresh cards are generated instantly.</li>
@@ -99,17 +122,9 @@
         <li><strong>Works on any device:</strong> Phones, tablets, and desktop computers. Fully mobile-optimised, tested on iOS and Android.</li>
         <li><strong>Installs as a PWA:</strong> Add to your home screen for fullscreen play, just like a native app — no app store required.</li>
         <li><strong>Completely free:</strong> No account, no subscription, no in-app purchases. The full feature set is available to everyone.</li>
+        <li><strong>Voice guesses (Solo):</strong> Speak your answers instead of typing — continuous hands-free listening on desktop Chrome/Edge and the Android app.</li>
+        <li><strong>Spoken clues (Solo):</strong> Have the AI read each clue aloud in a natural voice, with adjustable speed — play eyes-free.</li>
     </ul>
-
-    <h2>Technology</h2>
-    <p>Taboosey is a Progressive Web App (PWA) built with plain HTML, CSS, and JavaScript — no frameworks, no bloat. It runs entirely in your browser. Game data (scores, preferences, seen words) is stored locally in your browser using localStorage; nothing is sent to a server. The Custom (AI) category uses Google's Gemini API to generate word cards on request.</p>
-    <p>Because Taboosey is a PWA, it can be installed directly from your browser to your home screen on both Android and iOS. Once installed, it opens in fullscreen mode without a browser address bar, giving it the feel of a native app.</p>
-
-    <div class="install-section">
-        <h2>Install Taboosey as an App</h2>
-        <p id="about-install-hint">Add Taboosey to your home screen for a fullscreen app experience.</p>
-        <button id="about-install-btn">&#x2B07; Install App</button>
-    </div>
 
     <h2>Contact &amp; Feedback</h2>
     <p>We actively improve Taboosey based on player feedback. If you have a bug to report, a category suggestion, or just want to say hello, reach out at <a href="mailto:feedback@taboosey.com">feedback@taboosey.com</a>. We read every message.</p>

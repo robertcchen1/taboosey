@@ -13,8 +13,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Taboosey">
 
-    <meta name="description" content="Describe the word without saying the Taboo words! Play instantly on your phone.">
-    
+    <meta name="description" content="Describe the word without saying the Taboo words! Play with friends, or go Solo vs AI — the AI gives the clues while you guess by typing or speaking. Play instantly on your phone.">
+
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://taboosey.com/">
     <meta property="og:title" content="Taboosey: Online Taboo Word Game">
@@ -43,13 +43,15 @@
     }
     </script>
 
-    <!-- Google Analytics GA4 — replace G-XXXXXXXXXX with your Measurement ID -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <!-- Google Analytics GA4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-12813053FC"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
+      gtag('config', 'G-12813053FC');
+      // Tag app traffic so web vs. Android app is separable in reports
+      gtag('set', 'user_properties', { platform: (window.Capacitor ? 'android_app' : 'web') });
     </script>
 
     <meta name="google-adsense-account" content="ca-pub-7570484814519250">
@@ -112,6 +114,7 @@
                     <div class="brief-rules">
                         <p style="margin-top: 0; margin-bottom: 8px;">Describe the <strong>Target Word</strong> without saying the <strong>Taboo words</strong>!</p>
                         <p style="margin: 0; margin-bottom: 8px;">Score <span class="score-badge success">+1</span> for correct, <span class="score-badge danger">-1</span> for Taboo.</p>
+                        <p style="margin: 0; margin-bottom: 8px;"><i class="fas fa-robot" style="color:#e67e22;"></i> No teammates? Tap <strong>Solo vs AI</strong> — the AI gives the clues and you guess by typing or speaking.</p>
                         <p style="margin: 0; font-weight: bold; color: #e67e22;"><i class="fas fa-lightbulb"></i> Choose a category, or select Custom (AI) to create your own!</p>
                     </div>
                     
@@ -119,7 +122,7 @@
                         <div class="input-group">
                             <label class="stylish-label" for="time-limit">Time Limit:</label>
                             <div class="input-wrap">
-                                <input type="number" id="time-limit" value="60" min="10" max="120">
+                                <input type="number" id="time-limit" value="90" min="10" max="120">
                                 <span class="unit">sec</span>
                             </div>
                         </div>
@@ -159,8 +162,9 @@
                         </div>
                     </div>
 
-                    <button id="start-game-btn" class="btn-success btn-large">Start Game</button>
-                    
+                    <button id="start-game-btn" class="btn-success btn-large"><i class="fas fa-users"></i> Start Team Game</button>
+                    <button id="start-solo-btn" class="btn-warning btn-large" style="margin-top: 10px;"><i class="fas fa-robot"></i> Solo vs AI</button>
+
                     <div class="bottom-links-container">
                         <span class="how-to-play-link"><i class="fas fa-question-circle"></i> How to play</span>
                         <span id="clear-memory-link" class="reset-memory-link"><i class="fas fa-trash-alt"></i> Reset Deck</span>
@@ -205,7 +209,7 @@
                         <div class="settings-row">
                             <div class="setting-item">
                                 <label class="stylish-label" for="turn-time-limit">Time:</label>
-                                <input type="number" id="turn-time-limit" class="small-input" value="60" min="10" max="120">
+                                <input type="number" id="turn-time-limit" class="small-input" value="90" min="10" max="120">
                             </div>
                             <div class="setting-item">
                                 <label class="stylish-label" for="rounds-limit-turn">Rounds:</label>
@@ -251,7 +255,7 @@
                 <div id="game-screen" class="screen">
                     <div class="header">
                         <div class="timer-wrap">
-                            <span id="timer-display">60</span>s <span id="paused-indicator" style="display: none; color: #f39c12; font-style: italic; font-weight: normal;">(paused)</span>
+                            <span id="timer-display">90</span>s <span id="paused-indicator" style="display: none; color: #f39c12; font-style: italic; font-weight: normal;">(paused)</span>
                         </div>
                         <div class="score-wrap">
                             Score: <span id="current-round-score">0</span>
@@ -322,11 +326,89 @@
                     </div>
                 </div>
 
+                <div id="solo-game-screen" class="screen">
+                    <div class="header">
+                        <div class="timer-wrap">
+                            <span id="solo-timer-display">90</span>s <span id="solo-paused-indicator" style="display: none; color: #f39c12; font-style: italic; font-weight: normal;">(paused)</span><span id="solo-typing-indicator" style="display: none; color: #3498db; font-style: italic; font-weight: normal;">(typing…)</span>
+                        </div>
+                        <div class="score-wrap">
+                            Score: <span id="solo-round-score">0</span>
+                        </div>
+                    </div>
+                    <div id="solo-timer-bar-wrap"><div id="solo-timer-bar"></div></div>
+
+                    <div id="solo-played-strip" class="solo-played-strip"></div>
+
+                    <div class="solo-active-card">
+                        <div id="solo-card-meta" class="solo-card-meta">???</div>
+
+                        <div id="solo-clue-feed" class="solo-clue-feed"></div>
+
+                        <div id="solo-thinking" class="solo-thinking" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> AI is thinking&hellip;
+                        </div>
+
+                        <form id="solo-guess-form" class="solo-guess-form" autocomplete="off">
+                            <input type="text" id="solo-guess-input" placeholder="Type your guess..." autocomplete="off" autocapitalize="off" spellcheck="false">
+                            <button type="button" id="solo-mic-btn" class="solo-mic-btn" title="Speak your guess" aria-label="Speak your guess" style="display:none;"><i class="fas fa-microphone"></i></button>
+                            <button type="submit" id="solo-guess-btn" class="btn-success">Guess</button>
+                        </form>
+                        <label id="pause-on-type-label" class="pause-on-type-label">
+                            <input type="checkbox" id="pause-on-type-checkbox"><span>Pause timer while typing</span>
+                        </label>
+                        <label id="speak-clues-label" class="speak-clues-label">
+                            <input type="checkbox" id="speak-clues-checkbox"><span>🔊 Speak clues aloud</span>
+                        </label>
+                        <div id="speak-rate-row" class="speak-rate-row" style="display:none;">
+                            <span>Speed</span>
+                            <input type="range" id="speak-rate-slider" min="0.5" max="1.8" step="0.1" value="1">
+                            <span id="speak-rate-value">1.0×</span>
+                        </div>
+                        <div id="tts-echo-hint" class="tts-echo-hint" style="display:none;">🎧 Tip: use headphones so the mic doesn't hear the spoken clues.</div>
+                    </div>
+
+                    <div class="utility-controls">
+                        <button id="solo-pause-btn" class="btn-warning">Pause</button>
+                        <button id="solo-skip-btn" class="btn-secondary">Skip</button>
+                        <button id="solo-end-round-btn" class="btn-danger">End Round</button>
+                    </div>
+                </div>
+
+                <div id="solo-gameover-screen" class="screen">
+                    <div class="gameover-winner" id="solo-go-summary"></div>
+                    <div class="stats-panel">
+                        <div class="team-totals" style="justify-content: center;">
+                            <div class="team-stat">
+                                <h3>Final Score</h3>
+                                <span id="solo-go-final-score" class="big-score t1-score">0</span>
+                            </div>
+                        </div>
+                        <p id="solo-go-meta" class="go-category-label"></p>
+                        <div class="history-section">
+                            <h3>Round History</h3>
+                            <div class="history-grid-header solo-grid-header">
+                                <span class="hg-round">Round</span>
+                                <span>Score</span>
+                                <span>Cards</span>
+                                <span class="hg-details"></span>
+                            </div>
+                            <div class="history-container">
+                                <ul id="solo-go-history-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-row" style="margin-top: 15px;">
+                        <button id="solo-play-again-btn" class="btn-success">Play Again</button>
+                        <button id="solo-new-game-btn" class="btn-warning">New Game</button>
+                    </div>
+                </div>
+
                 <!-- Modals -->
                 <div id="rules-modal" class="modal">
                     <div class="modal-content">
                         <span class="close-btn" id="close-rules-btn">&times;</span>
                         <h2><i class="fas fa-book-open"></i> How to Play</h2>
+                        <p style="margin: 0 0 6px 0; font-weight: bold; color: #e67e22;"><i class="fas fa-users"></i> Team Game</p>
                         <ul class="aesthetic-list">
                             <li>Divide into two teams.</li>
                             <li>One player acts as the clue-giver. They must describe the <strong>Target Word</strong> to their team without using any of the <strong>Taboo words</strong> below it.</li>
@@ -334,6 +416,14 @@
                             <li><span class="score-badge danger">-1 point</span> if you accidentally say a Taboo word.</li>
                             <li><span class="score-badge secondary">0 points</span> to skip a hard word.</li>
                             <li>When time runs out, pass the device to the other team!</li>
+                        </ul>
+                        <p style="margin: 16px 0 6px 0; font-weight: bold; color: #e67e22;"><i class="fas fa-robot"></i> Solo vs AI</p>
+                        <ul class="aesthetic-list">
+                            <li>Play on your own — the <strong>AI is the clue-giver</strong> and you're the guesser.</li>
+                            <li>The AI reveals progressive clues for a hidden word. The card shows the word shape (each blank fills in as you get a word right).</li>
+                            <li><strong>Type your guess</strong>, or tap the <i class="fas fa-microphone"></i> mic to <strong>speak</strong> it. Type or say <em>"skip"</em> to move on.</li>
+                            <li>Turn on <strong>🔊 Speak clues aloud</strong> to have the AI read each clue (adjustable speed).</li>
+                            <li>Score <span class="score-badge success">+1</span> per word solved before the timer runs out.</li>
                         </ul>
                     </div>
                 </div>
@@ -355,6 +445,16 @@
                     </div>
                 </div>
 
+                <div id="solo-card-modal" class="modal">
+                    <div class="modal-content" style="max-width: 450px;">
+                        <span class="close-btn" id="close-solo-card-btn">&times;</span>
+                        <h2 id="solo-card-modal-title"><i class="fas fa-id-card"></i> Card</h2>
+                        <p id="solo-card-modal-status" style="text-align: center; margin: 5px 0 12px 0; font-size: 0.95rem;"></p>
+                        <p id="solo-card-modal-taboo" style="font-size: 0.85rem; color: #666; margin: 0 0 12px 0;"></p>
+                        <div id="solo-card-modal-transcript" class="solo-clue-feed" style="max-height: 60vh;"></div>
+                    </div>
+                </div>
+
                 <div id="custom-alert-modal" class="modal">
                     <div class="modal-content" style="max-width: 320px; text-align: center;">
                         <h2 id="custom-alert-title" style="border: none; padding-bottom: 0; margin-bottom: 10px;">Notice</h2>
@@ -371,6 +471,7 @@
     </main>
 
     <script src="words.js"></script>
+    <script src="clues.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

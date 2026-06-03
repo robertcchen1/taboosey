@@ -213,7 +213,7 @@ input[type="number"]:focus, input[type="text"]:focus, .stylish-input:focus { bor
 
 .history-section h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 1.1rem; }
 .history-grid-header, .history-item { display: grid; grid-template-columns: 1fr 40px 20px 40px 40px; align-items: center; }
-.history-grid-header { padding: 0 15px 5px 15px; font-size: 0.8rem; color: #7f8c8d; font-weight: bold; text-transform: uppercase; }
+.history-grid-header { padding: 0 25px 5px 25px; font-size: 0.8rem; color: #7f8c8d; font-weight: bold; text-transform: uppercase; }
 .hg-round { text-align: left; }
 .hg-t1, .hg-t2, .hg-blank { text-align: center; }
 .history-container { max-height: 120px; overflow-y: auto; background: #f9f9f9; border-radius: 6px; padding: 8px; border: 1px solid #e0e0e0; }
@@ -333,6 +333,289 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 #timer-bar.danger { background: #e74c3c; }
 
+/* === SOLO MODE === */
+
+/* Solo timer bar (mirrors main timer bar) */
+#solo-timer-bar-wrap {
+    background: #ddd;
+    border-radius: 4px;
+    height: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+#solo-timer-bar {
+    background: #f39c12;
+    height: 100%;
+    border-radius: 4px;
+    width: 100%;
+    transition: width 0.9s linear, background-color 0.3s;
+}
+#solo-timer-bar.danger { background: #e74c3c; }
+
+/* Played-card chip carousel */
+.solo-played-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 6px 4px;
+    margin-bottom: 8px;
+    min-height: 0;
+    scrollbar-width: thin;
+}
+.solo-played-strip:empty { display: none; }
+.solo-played-chip {
+    flex-shrink: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 14px;
+    padding: 4px 11px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.solo-played-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+.solo-played-chip.status-correct { border-color: #27ae60; background: #eafaf1; color: #1e6e3b; }
+.solo-played-chip.status-skipped { border-color: #95a5a6; background: #f4f6f6; color: #6b7878; }
+
+/* Active card area */
+.solo-active-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 2px solid #111;
+    text-align: left;
+}
+.solo-card-meta {
+    text-align: center;
+    font-size: 1.1rem;
+    letter-spacing: normal;
+    color: #555;
+    padding: 6px 0 12px 0;
+    border-bottom: 1px dashed #ccc;
+    margin-bottom: 10px;
+    line-height: 2;
+}
+.solo-card-meta .shape-hint { display: block; font-size: 0.75rem; color: #888; letter-spacing: 0.5px; margin-top: 4px; font-family: 'Segoe UI', Tahoma, sans-serif; }
+.word-blank {
+    display: inline-block;
+    width: 48px;
+    border-bottom: 2.5px solid #555;
+    margin: 0 5px;
+    vertical-align: baseline;
+}
+.word-revealed {
+    display: inline-block;
+    min-width: 32px;
+    padding: 0 4px;
+    margin: 0 5px;
+    border-bottom: 2.5px solid #27ae60;
+    color: #27ae60;
+    font-weight: 600;
+    vertical-align: baseline;
+    text-transform: capitalize;
+}
+
+/* Clue/guess feed (scrollable) */
+.solo-clue-feed {
+    max-height: 240px;
+    min-height: 80px;
+    overflow-y: auto;
+    padding: 4px 2px;
+    margin-bottom: 10px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+.solo-feed-entry {
+    margin: 6px 0;
+    display: flex;
+}
+.solo-feed-entry.clue { justify-content: flex-start; }
+.solo-feed-entry.guess { justify-content: flex-end; }
+.solo-feed-entry.feedback { justify-content: center; }
+.solo-bubble {
+    max-width: 80%;
+    padding: 7px 11px;
+    border-radius: 14px;
+    word-wrap: break-word;
+}
+.solo-bubble.clue {
+    background: #fdebd0;
+    border: 1px solid #f5cba7;
+    color: #784212;
+    border-bottom-left-radius: 4px;
+}
+.solo-bubble.guess {
+    background: #d6eaf8;
+    border: 1px solid #aed6f1;
+    color: #1a5276;
+    border-bottom-right-radius: 4px;
+}
+.solo-bubble.feedback {
+    background: transparent;
+    color: #7f8c8d;
+    font-style: italic;
+    font-size: 0.86rem;
+    text-align: center;
+    padding: 3px 11px;
+}
+
+/* Redacted taboo */
+.redacted-taboo {
+    background: #111;
+    color: #111;
+    border-radius: 2px;
+    padding: 0 4px;
+    font-family: monospace;
+    user-select: none;
+    letter-spacing: 0;
+}
+
+/* Thinking indicator */
+.solo-thinking {
+    color: #888;
+    font-style: italic;
+    font-size: 0.88rem;
+    padding: 4px 12px;
+    text-align: center;
+}
+
+/* Guess input form */
+.solo-guess-form {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+.solo-guess-form input {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-family: inherit;
+}
+.solo-guess-form input:focus {
+    border-color: #f39c12;
+    outline: none;
+}
+.solo-guess-form button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.pause-on-type-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    color: #999;
+    cursor: pointer;
+    user-select: none;
+}
+.pause-on-type-label input[type="checkbox"] {
+    accent-color: #f39c12;
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.pause-on-type-label:hover { color: #666; }
+
+.speak-clues-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: #999;
+    cursor: pointer;
+    user-select: none;
+}
+.speak-clues-label input[type="checkbox"] {
+    accent-color: #f39c12;
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.speak-clues-label:hover { color: #666; }
+.speak-rate-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding-left: 18px;
+    font-size: 0.72rem;
+    color: #999;
+}
+.speak-rate-row input[type="range"] {
+    flex: 1;
+    max-width: 160px;
+    accent-color: #f39c12;
+    cursor: pointer;
+}
+.speak-rate-row #speak-rate-value {
+    min-width: 34px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.tts-echo-hint {
+    font-size: 0.7rem;
+    color: #aaa;
+    margin-top: 4px;
+    padding-left: 18px;
+}
+
+/* Voice mode mic toggle (Solo vs AI) */
+.solo-mic-btn {
+    flex-shrink: 0;
+    width: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: #7f8c8d;
+    color: #fff;
+    font-size: 1.05rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.solo-mic-btn:hover { background: #95a5a6; }
+.solo-mic-btn.listening {
+    background: #e74c3c;
+    animation: solo-mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes solo-mic-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.6); }
+    70%  { box-shadow: 0 0 0 8px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}
+
+/* Solo-mode adaptations to turn-screen */
+.solo-mode-active .team-totals { justify-content: center; }
+.solo-mode-active .team-stat:nth-child(2) { display: none; }
+.solo-mode-active .history-grid-header .hg-blank,
+.solo-mode-active .history-grid-header .hg-t2,
+.solo-mode-active .history-container .hg-blank,
+.solo-mode-active .history-container .hg-t2 { display: none; }
+.solo-mode-active .history-grid-header { grid-template-columns: 70px 1fr 50px; }
+.solo-mode-active .history-item { grid-template-columns: 70px 1fr 50px; }
+
+/* Solo gameover grid */
+.solo-grid-header { display: grid; grid-template-columns: 60px 1fr 60px 50px; }
+#solo-go-history-list .history-item { display: grid; grid-template-columns: 60px 1fr 60px 50px; }
+
 /* === KEYBOARD LEGEND === */
 #keyboard-legend {
     color: #aaa;
@@ -383,6 +666,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
     .team-totals { padding-bottom: 10px; margin-bottom: 10px; }
     .big-score { font-size: 2.2rem; }
     .history-container { max-height: 80px; padding: 5px; }
+    .history-grid-header { padding: 0 17px 5px 17px; }
     .history-item { padding: 5px 10px; margin-bottom: 4px; }
     .hist-round { font-size: 0.85rem; }
     .hist-score { font-size: 0.95rem; }
