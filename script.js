@@ -71,6 +71,9 @@ let speakClues = localStorage.getItem('tabooseySpeakClues') === 'true'; // read 
 let clueRate = parseFloat(localStorage.getItem('tabooseyClueRate')) || 1; // TTS speech rate
 let ttsSpeaking = false;           // true while a clue is being read aloud
 let interimSubmitTimer = null;     // debounce: auto-submit stable interim transcript
+let lastVoiceSubmit = '';          // last text submitted via voice (for dedup)
+let lastVoiceSubmitAt = 0;         // timestamp of last voice submission
+const VOICE_DEDUP_MS = 2500;       // ignore duplicate voice text within this window
 let lastSpokenClue = '';           // normalized words of the clue currently/just spoken
 let ttsEndedAt = 0;                // timestamp (ms) when the last spoken clue finished
 const TTS_ECHO_GRACE_MS = 1500;    // window after speech where echo results may still arrive
@@ -200,9 +203,22 @@ function detectVoiceMode() {
 
 function handleVoiceGuess(text) {
     const val = stripClueWords(text);
-    if (!val) return; // nothing left once the clue echo is removed
+    if (!val) return;
     if (soloCardResolving || isPaused || !currentCard) return;
+    submitVoiceGuess(val);
+}
+
+// Single entry point for all voice submissions — enforces dedup so the debounce timer
+// and the recognizer's final-result event can't both submit the same phrase.
+function submitVoiceGuess(val) {
+    const now = Date.now();
+    const norm = val.trim().toLowerCase();
+    if (!norm) return;
+    if (norm === lastVoiceSubmit && now - lastVoiceSubmitAt < VOICE_DEDUP_MS) return;
+    lastVoiceSubmit = norm;
+    lastVoiceSubmitAt = now;
     ui.soloGuessInput.value = '';
+    clearInterimSubmitTimer();
     submitSoloGuess(val);
 }
 
@@ -238,8 +254,7 @@ function showInterim(text) {
         interimSubmitTimer = null;
         const current = (ui.soloGuessInput.value || '').trim();
         if (current && !soloCardResolving && !isPaused && currentCard) {
-            ui.soloGuessInput.value = '';
-            submitSoloGuess(current);
+            submitVoiceGuess(current);
         }
     }, 1000);
 }
@@ -960,6 +975,7 @@ async function loadNextSoloCard() {
     soloAwaitingFirstClue = false;
     soloGuessCount = 0;
     soloCardStartTime = Date.now();
+    lastVoiceSubmit = ''; lastVoiceSubmitAt = 0; // clear dedup for the fresh card
     // Randomize skip thresholds per card: 35-50s and 8-12 guesses
     soloAiSkipThreshold = {
         time: 35 + Math.floor(Math.random() * 16),
